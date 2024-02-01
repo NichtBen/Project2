@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <chrono>
 
 GLuint computeShaderProgram;
 GLuint resultTexture;
@@ -77,6 +78,19 @@ void init() {
 }
 
 void renderFunction() {
+
+    GLint timeUniformLocation = glGetUniformLocation(computeShaderProgram, "time");
+
+    // Get the current time
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    auto duration = currentTime.time_since_epoch();
+    float time = std::chrono::duration<float>(duration).count();
+
+    // Pass time to the compute shader
+    glUseProgram(computeShaderProgram);
+    glUniform1f(timeUniformLocation, time);
+
+
     // Clear the color buffer to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -119,7 +133,8 @@ int main(int argc, char** argv) {
 
     init();
 
-    glutDisplayFunc(renderFunction);
+    glutDisplayFunc(renderFunction); 
+    glutIdleFunc(renderFunction);
 
     glutMainLoop();
 
