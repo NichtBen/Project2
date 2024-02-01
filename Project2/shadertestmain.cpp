@@ -114,14 +114,13 @@ void renderFunction() {
     GLint timeUniformLocation = glGetUniformLocation(computeShaderProgram, "time");
 
     // Get the current time
-    previousTime = currentTime;
     currentTime = glutGet(GLUT_ELAPSED_TIME);
     float timeInSeconds = currentTime / 1000.0f;  // Convert to seconds
 
     if (currentTime - previousTime < 1000 / 15) {
-        currentTime = previousTime;
         return;
     }
+    previousTime = currentTime;
 
     // Pass time to the compute shader
     glUseProgram(computeShaderProgram);
