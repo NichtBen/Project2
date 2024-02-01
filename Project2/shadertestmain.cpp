@@ -146,11 +146,12 @@ void renderFunction() {
     glBindTexture(GL_TEXTURE_2D, resultTexture);
 
     glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, -1.0f);
-    glTexCoord2f(1.0f, 0.0f); glVertex2f(1.0f, -1.0f);
-    glTexCoord2f(1.0f, 1.0f); glVertex2f(1.0f, 1.0f);
-    glTexCoord2f(0.0f, 1.0f); glVertex2f(-1.0f, 1.0f);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f, 0.0f);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(simulationWidth, 0.0f);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(simulationWidth, simulationHeight);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, simulationHeight);
     glEnd();
+
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
@@ -180,8 +181,18 @@ void cleanup() {
 
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
+
+    // Set initial window size
+    glutInitWindowSize(simulationWidth, simulationHeight);
+
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
     glutCreateWindow("Compute Shader Test");
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, simulationWidth, 0, simulationHeight, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glViewport(0, 0, simulationWidth, simulationHeight);
 
     glewInit();
 
