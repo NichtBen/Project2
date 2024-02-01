@@ -8,8 +8,9 @@
 #include <thread>
 
 //Simulation variable
-int simulationWidth = 800;
-int simulationHeight = 600;
+int simulationWidth = 1900;
+int simulationHeight = 1040;
+float targetFrameRate = 60.0f;
 
 GLuint computeShaderProgram;
 GLuint startTexture;
@@ -51,6 +52,10 @@ GLuint LoadComputeShader(const char* shaderPath) {
 }
 
 void init() {
+    // Adjust the viewport size to match the desired resolution
+    glViewport(0, 0, simulationWidth, simulationHeight);
+
+
     // Load compute shader
     const char* computeShaderPath = "CStest.glsl";  // Replace with your actual path
     GLuint computeShader = LoadComputeShader(computeShaderPath);
@@ -104,7 +109,7 @@ void init() {
 
     // Set an initial red pixel in the startTexture
     float initialColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };  // Red color
-    for(int i = 0; i <70000; i ++)
+    for(int i = 0; i <1900*10* 20; i ++)
         glTexSubImage2D(GL_TEXTURE_2D, 0, dis(gen), dis2(gen), 1, 1, GL_RGBA, GL_FLOAT, initialColor);
 }
 
@@ -117,10 +122,9 @@ void renderFunction() {
     currentTime = glutGet(GLUT_ELAPSED_TIME);
     float timeInSeconds = currentTime / 1000.0f;  // Convert to seconds
 
-    if (currentTime - previousTime < 1000 / 15) {
+    if (currentTime - previousTime < 1000 / 60) {
         return;
     }
-    previousTime = currentTime;
 
     // Pass time to the compute shader
     glUseProgram(computeShaderProgram);
@@ -162,18 +166,6 @@ void renderFunction() {
 
 
     glutSwapBuffers();
-
-    int currentTime = glutGet(GLUT_ELAPSED_TIME);
-    float deltaTime = (currentTime - previousTime) / 1000.0f; // Convert to seconds
-
-    // Add a delay to control the frame rate (e.g., 60 frames per second)
-    float targetFrameRate = 60.0f;
-    float frameTime = 1.0f / targetFrameRate;
-
-    if (deltaTime < frameTime) {
-        int sleepTime = static_cast<int>((frameTime - deltaTime) * 1000.0f);
-        std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
-    }
 
     previousTime = currentTime;
 
