@@ -16,9 +16,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="CStest.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="freeglut_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="shadertestmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
