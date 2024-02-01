@@ -14,14 +14,17 @@ vec3 y = vec3(0,1,0);
 void main() {
     ivec2 storePos = ivec2(gl_GlobalInvocationID.xy);
 
-    int neighbours = 0;
+    vec4 currentColor = imageLoad(Start, storePos);
+    
+    int neighbours =0;
+    if(currentColor[0] == 1)
+        neighbours = -1;
     float addedAngles =0;
 
-    vec4 currentColor = imageLoad(Start, storePos);
 
     //iterate over 3x3 grit 
     for(int i = -1; i <= 1; i++){
-        for(int j = -1; j <= 1 && (i != 0 || j != 0);j++){
+        for(int j = -1; j <= 1;j++){
             ivec2 neighborPos = storePos + ivec2(i, j);
             vec4 neighbourColor = imageLoad(Start, neighborPos);
             
@@ -45,9 +48,6 @@ void main() {
             nextColor = vec4(1,0,0,1);
         }
     }
-    // Calculate color based on time      -old for now
-    //vec3 color = vec3(sin(time), cos(time), 0.5);
-
     
     // Write color to the image
     imageStore(Result, storePos, nextColor);

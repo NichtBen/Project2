@@ -7,9 +7,14 @@
 #include <random>
 #include <thread>
 
+//window variable
+int windowWidth = 1900;
+int windowHeight = 1040;
+
+
 //Simulation variable
-int simulationWidth = 1900;
-int simulationHeight = 1040;
+int simulationWidth = 900;
+int simulationHeight = 700;
 float targetFrameRate = 60.0f;
 
 GLuint computeShaderProgram;
@@ -109,7 +114,7 @@ void init() {
 
     // Set an initial red pixel in the startTexture
     float initialColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };  // Red color
-    for(int i = 0; i <1900*10* 20; i ++)
+    for(int i = 0; i <simulationWidth*simulationHeight*0.1; i ++)
         glTexSubImage2D(GL_TEXTURE_2D, 0, dis(gen), dis2(gen), 1, 1, GL_RGBA, GL_FLOAT, initialColor);
 }
 
@@ -183,7 +188,7 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
 
     // Set initial window size
-    glutInitWindowSize(simulationWidth, simulationHeight);
+    glutInitWindowSize(windowWidth, windowHeight);
 
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
     glutCreateWindow("Compute Shader Test");
