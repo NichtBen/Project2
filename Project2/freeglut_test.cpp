@@ -10,14 +10,21 @@ void renderFunction() {
     glRotatef(angle, 1.0f, 1.0f, 1.0f);
 
     glBegin(GL_QUADS);
-    glVertex3f(-0.5f, -0.5f, 0.f);
-    glVertex3f(0.5f, -0.5f, 0.f);
-    glVertex3f(0.5f, 0.5f, 0.f);
-    glVertex3f(-0.5f, 0.5f, 0.f);
-    glVertex3f(-0.5f, 0.5f, 1.0f);
-    glVertex3f(0.5f, 0.5f, 1.0f);
-    glVertex3f(0.5f, -0.5f, 1.0f);
-    glVertex3f(-0.5f, -0.5f, 1.0f);
+    //Backside
+    glVertex3f(-0.5f, -0.5f, -0.5f);
+    glVertex3f(0.5f, -0.5f, -0.5f);
+    glVertex3f(0.5f, 0.5f, -0.5f);
+    glVertex3f(-0.5f, 0.5f, -0.5f);
+    //front
+    glVertex3f(-0.5f, 0.5f, 0.5f);
+    glVertex3f(0.5f, 0.5f, 0.5f);
+    glVertex3f(0.5f, -0.5f, 0.5f);
+    glVertex3f(-0.5f, -0.5f, 0.5f);
+    //top
+    glVertex3f(-0.5f, 0.5f, 0.5f);
+    glVertex3f(-0.5f, 0.5f, -0.5f);
+    glVertex3f(0.5f, 0.5f, -0.5f);
+    glVertex3f(0.5f, 0.5f, 0.5f);
     glEnd();
 
     glPopMatrix();
