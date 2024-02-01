@@ -5,10 +5,18 @@
 #include <sstream>
 #include <chrono>
 #include <random>
+#include <thread>
+
+//Simulation variable
+int simulationWidth = 800;
+int simulationHeight = 600;
 
 GLuint computeShaderProgram;
 GLuint startTexture;
 GLuint resultTexture;
+
+int previousTime;
+int currentTime;
 
 GLuint LoadComputeShader(const char* shaderPath) {
     // Read the shader source code from the file
@@ -70,7 +78,7 @@ void init() {
     // Create start texture
     glGenTextures(1, &startTexture);
     glBindTexture(GL_TEXTURE_2D, startTexture);
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, 800, 600);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, simulationWidth, simulationHeight);
 
     // Set up the texture as an image in the compute shader
     glBindImageTexture(1, startTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
@@ -78,7 +86,7 @@ void init() {
     // Create result texture
     glGenTextures(1, &resultTexture);
     glBindTexture(GL_TEXTURE_2D, resultTexture);
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, 800, 600);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, simulationWidth, simulationHeight);
 
     // Set up the texture as an image in the compute shader
     glBindImageTexture(0, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
@@ -87,8 +95,8 @@ void init() {
     // Create a random number generator
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dis(0., 799);
-    std::uniform_int_distribution<int> dis2(0,599);
+    std::uniform_int_distribution<int> dis(0., simulationWidth-1);
+    std::uniform_int_distribution<int> dis2(0, simulationHeight-1);
 
 
     // Rebind startTexture before the loop
@@ -106,13 +114,18 @@ void renderFunction() {
     GLint timeUniformLocation = glGetUniformLocation(computeShaderProgram, "time");
 
     // Get the current time
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    auto duration = currentTime.time_since_epoch();
-    float time = std::chrono::duration<float>(duration).count();
+    previousTime = currentTime;
+    currentTime = glutGet(GLUT_ELAPSED_TIME);
+    float timeInSeconds = currentTime / 1000.0f;  // Convert to seconds
+
+    if (currentTime - previousTime < 1000 / 15) {
+        currentTime = previousTime;
+        return;
+    }
 
     // Pass time to the compute shader
     glUseProgram(computeShaderProgram);
-    glUniform1f(timeUniformLocation, time);
+    glUniform1f(timeUniformLocation, timeInSeconds);
 
 
     // Clear the color buffer to black
@@ -121,7 +134,7 @@ void renderFunction() {
 
     // Dispatch the compute shader
     glUseProgram(computeShaderProgram);
-    glDispatchCompute(800 / 8, 600 / 8, 1);
+    glDispatchCompute(simulationWidth / 8, simulationHeight / 8, 1);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
     // Use the resultTexture to render a quad
@@ -150,6 +163,22 @@ void renderFunction() {
 
 
     glutSwapBuffers();
+
+    int currentTime = glutGet(GLUT_ELAPSED_TIME);
+    float deltaTime = (currentTime - previousTime) / 1000.0f; // Convert to seconds
+
+    // Add a delay to control the frame rate (e.g., 60 frames per second)
+    float targetFrameRate = 60.0f;
+    float frameTime = 1.0f / targetFrameRate;
+
+    if (deltaTime < frameTime) {
+        int sleepTime = static_cast<int>((frameTime - deltaTime) * 1000.0f);
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
+    }
+
+    previousTime = currentTime;
+
+    glutPostRedisplay();
 }
 
 
@@ -170,7 +199,7 @@ int main(int argc, char** argv) {
     //makes it so it is updated every click?
     glutDisplayFunc(renderFunction); 
     //makes it so it is always updated, pretty fast
-    //glutIdleFunc(renderFunction);
+    glutIdleFunc(renderFunction);
 
     glutMainLoop();
 
