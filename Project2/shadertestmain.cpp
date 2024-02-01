@@ -122,7 +122,7 @@ void renderFunction() {
     currentTime = glutGet(GLUT_ELAPSED_TIME);
     float timeInSeconds = currentTime / 1000.0f;  // Convert to seconds
 
-    if (currentTime - previousTime < 1000 / 60) {
+    if (currentTime - previousTime < 1000 / targetFrameRate) {
         return;
     }
 
