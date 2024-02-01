@@ -4,8 +4,10 @@
 #include <fstream>
 #include <sstream>
 #include <chrono>
+#include <random>
 
 GLuint computeShaderProgram;
+GLuint startTexture;
 GLuint resultTexture;
 
 GLuint LoadComputeShader(const char* shaderPath) {
@@ -65,6 +67,14 @@ void init() {
 
     glDeleteShader(computeShader);
 
+    // Create start texture
+    glGenTextures(1, &startTexture);
+    glBindTexture(GL_TEXTURE_2D, startTexture);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, 800, 600);
+
+    // Set up the texture as an image in the compute shader
+    glBindImageTexture(1, startTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+
     // Create result texture
     glGenTextures(1, &resultTexture);
     glBindTexture(GL_TEXTURE_2D, resultTexture);
@@ -73,11 +83,25 @@ void init() {
     // Set up the texture as an image in the compute shader
     glBindImageTexture(0, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
-    // Use the compute shader program
-    glUseProgram(computeShaderProgram);
+
+    // Create a random number generator
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dis(0., 799);
+    std::uniform_int_distribution<int> dis2(0,599);
+
+
+    // Rebind startTexture before the loop
+    glBindTexture(GL_TEXTURE_2D, startTexture);
+
+    // Set an initial red pixel in the startTexture
+    float initialColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };  // Red color
+    for(int i = 0; i <70000; i ++)
+        glTexSubImage2D(GL_TEXTURE_2D, 0, dis(gen), dis2(gen), 1, 1, GL_RGBA, GL_FLOAT, initialColor);
 }
 
 void renderFunction() {
+
 
     GLint timeUniformLocation = glGetUniformLocation(computeShaderProgram, "time");
 
@@ -115,6 +139,16 @@ void renderFunction() {
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
 
+    // Swap textures
+    GLuint tempTexture = startTexture;
+    startTexture = resultTexture;
+    resultTexture = tempTexture;
+
+    // Update texture bindings
+    glBindImageTexture(1, startTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+    glBindImageTexture(0, resultTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+
     glutSwapBuffers();
 }
 
@@ -133,8 +167,10 @@ int main(int argc, char** argv) {
 
     init();
 
+    //makes it so it is updated every click?
     glutDisplayFunc(renderFunction); 
-    glutIdleFunc(renderFunction);
+    //makes it so it is always updated, pretty fast
+    //glutIdleFunc(renderFunction);
 
     glutMainLoop();
 
