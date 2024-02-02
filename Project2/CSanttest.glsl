@@ -14,19 +14,19 @@ void main() {
 
     vec4 currentColor = imageLoad(Start, storePos);
     
-    int red_neighbors  =0;
+    int neighbours =0;
     if(currentColor[0] == 1)
-        red_neighbors  = -1;
+        neighbours = -1;
 
     //iterate over 3x3 grit 
     for(int i = -1; i <= 1; i++){
         for(int j = -1; j <= 1;j++){
             ivec2 neighborPos = storePos + ivec2(i, j);
-            vec4 neighborColor = imageLoad(Start, neighborPos);
+            vec4 neighbourColor = imageLoad(Start, neighborPos);
             
 
-            if(neighborColor[0] == 1){
-            red_neighbors ++;
+            if(neighbourColor[0] == 1){
+            neighbours++;
             }
         }    
     }
@@ -35,16 +35,16 @@ void main() {
 
     //if dead cell
     if(currentColor[0] < 1){
-        if(red_neighbors == 3){
+        if(neighbours == 3){
             //birth new cell
             nextColor = vec4(1,0,0,1);
         }
     }else {
-        if(red_neighbors == 2 || neighbors == 3){
+        if(neighbours == 2 || neighbours == 3){
             nextColor = vec4(1,0,0,1);
         }
     }
-
+    
     // Write color to the image
     imageStore(Result, storePos, nextColor);
 }

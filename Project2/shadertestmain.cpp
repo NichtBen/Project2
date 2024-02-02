@@ -13,9 +13,10 @@ int windowHeight = 1040;
 
 
 //Simulation variable
-int simulationWidth = 900;
-int simulationHeight = 700;
-float targetFrameRate = 60.0f;
+int simulationWidth = 8000;
+int simulationHeight = 4000;
+float targetFrameRate = 0;
+float initialLifeAmount = 0.08;
 
 GLuint computeShaderProgram;
 GLuint startTexture;
@@ -114,7 +115,7 @@ void init() {
 
     // Set an initial red pixel in the startTexture
     float initialColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };  // Red color
-    for(int i = 0; i <simulationWidth*simulationHeight*0.1; i ++)
+    for(int i = 0; i <simulationWidth*simulationHeight*initialLifeAmount; i ++)
         glTexSubImage2D(GL_TEXTURE_2D, 0, dis(gen), dis2(gen), 1, 1, GL_RGBA, GL_FLOAT, initialColor);
 }
 
@@ -127,7 +128,7 @@ void renderFunction() {
     currentTime = glutGet(GLUT_ELAPSED_TIME);
     float timeInSeconds = currentTime / 1000.0f;  // Convert to seconds
 
-    if (currentTime - previousTime < 1000 / targetFrameRate) {
+    if (targetFrameRate != 0 && currentTime - previousTime < 1000 / targetFrameRate) {
         return;
     }
 
@@ -208,9 +209,12 @@ int main(int argc, char** argv) {
     //makes it so it is always updated, pretty fast
     glutIdleFunc(renderFunction);
 
+    std::cout << "end2";
     glutMainLoop();
 
     cleanup();
+    while (true);
+    std::cout << "end";
 
     return 0;
 }
