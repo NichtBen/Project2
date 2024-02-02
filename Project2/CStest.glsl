@@ -40,7 +40,7 @@ void main() {
             nextColor = vec4(1,0,0,1);
         }
     }else {
-        if(red_neighbors == 2 || neighbors == 3){
+        if(red_neighbors == 2 || red_neighbors == 3){
             nextColor = vec4(1,0,0,1);
         }
     }
