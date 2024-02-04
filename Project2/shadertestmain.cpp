@@ -11,7 +11,7 @@
 int windowWidth = 1000;
 int windowHeight = 800;
 bool keepUpdating = false;
-bool debugging = true;
+bool debugging = false;
 int debugamountX = 3;
 int debugamountY = 2;
 

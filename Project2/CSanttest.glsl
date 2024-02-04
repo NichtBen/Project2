@@ -58,6 +58,7 @@ void updateAgend() {
 
     // Write nextpos to output
     imageStore(nextagenddata_xy, computationPos, vec4(newPos, 0, 0));
+    imageStore(nextagenddata_angle, computationPos, vec4(currentAngle,0.0f, 0.0f, 0.0f));
 
     // Update currentxy after writing to the output texture
     currentxy = newPos;
