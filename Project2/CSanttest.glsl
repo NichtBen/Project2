@@ -74,6 +74,8 @@ float hashIntIoFloat(int state) {
 }
 
 
+
+
 void updateAgend() {
     // Calculate the new position based on the original currentxy
     uint random = hash(uint(currentxy[0] * currentxy[1] * currentAngle));
@@ -118,11 +120,6 @@ void main() {
     currentAngle = temp[0];
     
     
-    // Set the next color to white
-    vec4 t= vec4(0, 0, 0, 1);
-    
-    // Write the next color to the image
-    imageStore(Result, ivec2(currentxy), t);
 
 
 

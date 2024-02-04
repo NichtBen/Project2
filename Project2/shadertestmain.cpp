@@ -27,7 +27,15 @@ float initialLifeAmount = 0.08;
 int worldWidth = 250;
 int worldHeight = 340;
 
-GLuint computeShaderProgram;
+GLuint CStestProgram;
+GLuint CSanttestProgram;
+GLuint CSblurProgram;
+
+GLuint* shaderprograms[10];
+
+bool CSanttest = true;
+bool CStest = false;
+bool CSblur = true;
 
 GLuint startTexture;
 GLuint resultTexture;
@@ -72,7 +80,29 @@ GLuint LoadComputeShader(const char* shaderPath) {
         return 0;
     }
 
-    return shader;
+    if (shader == 0) {
+        std::cerr << "Failed to load compute shader" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    // Create compute shader program
+    GLuint computeShaderProgram = glCreateProgram();
+    glAttachShader(computeShaderProgram, shader);
+    glLinkProgram(computeShaderProgram);
+
+    GLint linkStatus;
+    glGetProgramiv(computeShaderProgram, GL_LINK_STATUS, &linkStatus);
+    if (linkStatus != GL_TRUE) {
+        GLchar infoLog[512];
+        glGetProgramInfoLog(computeShaderProgram, 512, NULL, infoLog);
+        std::cerr << "Compute shader program linking error:\n" << infoLog << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    glDeleteShader(shader);
+
+    return computeShaderProgram;
+
 }
 
 bool stringContainsShaderName(const char* path, const char* shaderName) {
@@ -80,7 +110,14 @@ bool stringContainsShaderName(const char* path, const char* shaderName) {
     return strstr(path, shaderName) != nullptr;
 }
 
-void initCStest() {
+void initCStestTextures()
+{
+
+    glUseProgram(CStestProgram);
+
+    glBindImageTexture(1, startTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+    glBindImageTexture(0, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
     // Create start texture
     glGenTextures(1, &startTexture);
     glBindTexture(GL_TEXTURE_2D, startTexture);
@@ -96,11 +133,82 @@ void initCStest() {
 
     // Set up the texture as an image in the compute shader
     glBindImageTexture(0, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+    glUseProgram(0);
+}
+
+void initCStest() 
+{
+    glUseProgram(CStest);
+
+    initCStestTextures();
+
+    // Create a random number generator
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dis(0., simulationWidth - 1);
+    std::uniform_int_distribution<int> dis2(0, simulationHeight - 1);
+    // Rebind startTexture before the loop
+    glBindTexture(GL_TEXTURE_2D, startTexture);
+
+    // Set an initial red pixel in the startTexture
+    float initialColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };  // Red color
+    for (int i = 0; i < simulationWidth * simulationHeight * initialLifeAmount; i++)
+        glTexSubImage2D(GL_TEXTURE_2D, 0, dis(gen), dis2(gen), 1, 1, GL_RGBA, GL_FLOAT, initialColor);
+
+    glUseProgram(0);
+}
+
+void updateCSanttestTextureBindings() {
+    // Update texture bindings
+    glBindImageTexture(6, startTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+    glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    glBindImageTexture(0, currentxyDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    glBindImageTexture(2, currentAngleDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    glBindImageTexture(3, nextxyDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    glBindImageTexture(5, nextAngleDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+    // ... (more bindings)
+
+    // Select shader program as the target
+    glUseProgram(CSanttestProgram);  // You may need to change the program based on your needs
+    GLint timeUniformLocation = glGetUniformLocation(CSanttestProgram, "deltaTime");
+    glUniform1f(timeUniformLocation, currentTime - previousTime);
+}
+
+void initCSanttestDebugTextureBindings() {
+
+    //set up for showing all data for debugging
+    textures[0] = &startTexture;
+    textures[2] = &currentxyDataTexture;
+    textures[4] = &currentAngleDataTexture;
+    textures[1] = &resultTexture;
+    textures[3] = &nextxyDataTexture;
+    textures[5] = &nextAngleDataTexture;
+
 }
 
 
-//creates and binds all textures 
+//creates and binds all textures etc for render call
 void initCSanttestTextures() {
+    GLint timeUniformLocation = glGetUniformLocation(CSanttestProgram, "deltaTime");
+    // Pass time to the compute shader
+    glUseProgram(CSanttestProgram);
+    glUniform1f(timeUniformLocation, currentTime - previousTime);
+
+
+
+    // Update texture bindings
+    glBindImageTexture(6, startTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+    glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    glBindImageTexture(0, currentxyDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    glBindImageTexture(2, currentAngleDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    glBindImageTexture(3, nextxyDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    glBindImageTexture(5, nextAngleDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+
+    //select shader programm as target 
+    glUseProgram(CSanttestProgram);
 
     // Create currendxdata texture holding xy data for agends
     glGenTextures(1, &currentxyDataTexture);
@@ -153,17 +261,18 @@ void initCSanttestTextures() {
     glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
 
+    glUseProgram(0);
 }
 
 
 void initCSanttest() {
     //select shader programm as target 
-    glUseProgram(computeShaderProgram);
+    glUseProgram(CSanttestProgram);
 
 
     //set up shader constants worldwidth and worldhigh
-    GLint widthLocation = glGetUniformLocation(computeShaderProgram, "worldWidth");
-    GLint heightLocation = glGetUniformLocation(computeShaderProgram, "worldHeight");
+    GLint widthLocation = glGetUniformLocation(CSanttestProgram, "worldWidth");
+    GLint heightLocation = glGetUniformLocation(CSanttestProgram, "worldHeight");
 
     glUniform1ui(widthLocation, worldWidth);
     glUniform1ui(heightLocation, worldHeight);
@@ -172,13 +281,7 @@ void initCSanttest() {
 
     initCSanttestTextures();
 
-    //set up for showing all data for debugging
-    textures[0] = &startTexture;
-    textures[2] = &currentxyDataTexture;
-    textures[4] = &currentAngleDataTexture;
-    textures[1] = &resultTexture;
-    textures[3] = &nextxyDataTexture;
-    textures[5] = &nextAngleDataTexture;
+    initCSanttestDebugTextureBindings();
 
 
     //create initial data
@@ -217,6 +320,37 @@ void initCSanttest() {
             glTexSubImage2D(GL_TEXTURE_2D, 0, i,  j, 1, 1, GL_RGBA, GL_FLOAT, initialColor2);
         }
     }
+
+    glUseProgram(0);
+}
+
+void updateBlurTextureBindings() {
+    // Update texture bindings
+    glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+    // Select shader program as the target
+    glUseProgram(CSblurProgram);  
+    GLint timeUniformLocation = glGetUniformLocation(CSblurProgram, "deltaTime");
+    glUniform1f(timeUniformLocation, currentTime - previousTime);
+}
+
+void initCSblurTextures() {
+    glUseProgram(CSblur);
+
+    glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+    glGenTextures(1, &resultTexture);
+    glBindTexture(GL_TEXTURE_2D, resultTexture);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, worldWidth, worldHeight);
+
+    // Set up the texture as an image in the compute shader
+    glBindImageTexture(0, resultTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+}
+
+void initCSblur() 
+{
+    initCSblurTextures();
 }
 
 void init() {
@@ -225,52 +359,27 @@ void init() {
 
 
     // Load compute shader
-    //const char* computeShaderPath = "CStest.glsl";  // Replace with your actual path
-    const char* computeShaderPath = "CSanttest.glsl";  // Replace with your actual path
-    GLuint computeShader = LoadComputeShader(computeShaderPath);
-    if (computeShader == 0) {
-        std::cerr << "Failed to load compute shader" << std::endl;
-        exit(EXIT_FAILURE);
-    }
 
-    // Create compute shader program
-    computeShaderProgram = glCreateProgram();
-    glAttachShader(computeShaderProgram, computeShader);
-    glLinkProgram(computeShaderProgram);
 
-    GLint linkStatus;
-    glGetProgramiv(computeShaderProgram, GL_LINK_STATUS, &linkStatus);
-    if (linkStatus != GL_TRUE) {
-        GLchar infoLog[512];
-        glGetProgramInfoLog(computeShaderProgram, 512, NULL, infoLog);
-        std::cerr << "Compute shader program linking error:\n" << infoLog << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    glDeleteShader(computeShader);
+    std::cout << "end3.1";
 
     //only init the shader currently used in computeShaderPath
-    if (stringContainsShaderName(computeShaderPath, "CStest.glsl")) {
+    if (CStest) {
         initCStest();
-    } else if (stringContainsShaderName(computeShaderPath, "CSanttest.glsl")) {
-        initCSanttest();
+    }
+    if (CSanttest) {
+        CSanttestProgram = LoadComputeShader("CSanttest.glsl");
+        initCSanttest(); 
+    }
+    if (CSblur) {
+
+        CSblurProgram = LoadComputeShader("CSblur.glsl");
+        initCSblur();
     }
 
 
-    // Create a random number generator
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dis(0., simulationWidth-1);
-    std::uniform_int_distribution<int> dis2(0, simulationHeight-1);
 
 
-    // Rebind startTexture before the loop
-    glBindTexture(GL_TEXTURE_2D, startTexture);
-
-    // Set an initial red pixel in the startTexture
-    float initialColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };  // Red color
-    for(int i = 0; i <simulationWidth*simulationHeight*initialLifeAmount; i ++)
-        glTexSubImage2D(GL_TEXTURE_2D, 0, dis(gen), dis2(gen), 1, 1, GL_RGBA, GL_FLOAT, initialColor);
 }
 
 
@@ -300,8 +409,7 @@ void renderTextureToScreen(GLint texture, int startx, int starty, int width, int
 void renderFunction() {
 
 
-    GLint timeUniformLocation = glGetUniformLocation(computeShaderProgram, "deltaTime");
-
+   
     // Get the current time
     currentTime = glutGet(GLUT_ELAPSED_TIME);
     
@@ -309,19 +417,47 @@ void renderFunction() {
         return;
     }
 
-    // Pass time to the compute shader
-    glUseProgram(computeShaderProgram);
-    glUniform1f(timeUniformLocation, currentTime - previousTime);
-
-
     // Clear the color buffer to black
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Dispatch the compute shader
-    glUseProgram(computeShaderProgram);
-    glDispatchCompute(simulationWidth / 8, simulationHeight / 8, 1);
-    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+
+    if(CStest)
+    {
+        //initialise texture context for shader
+        initCStestTextures();
+        // Dispatch the compute shader
+        glUseProgram(CStestProgram);
+        glDispatchCompute(simulationWidth / 8, simulationHeight / 8, 1);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+    }
+
+    if (CSanttest)
+    {
+        // update texture bindings
+        updateCSanttestTextureBindings();
+        // Dispatch the compute shader
+        glUseProgram(CSanttestProgram);
+        glDispatchCompute(simulationWidth / 8, simulationHeight / 8, 1);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+    }
+
+    if (CSblur)
+    {
+        //initialise texture context for shader
+        updateBlurTextureBindings();
+        // Dispatch the compute shader
+        glUseProgram(CSblurProgram);
+        glDispatchCompute(windowWidth / 8, windowHeight / 8, 1);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+    }
+
+
+    
 
     //display the different texture for debugging, or only result:
     
@@ -352,13 +488,6 @@ void renderFunction() {
     currentAngleDataTexture = nextAngleDataTexture;
     nextAngleDataTexture = tempTexture;
 
-    // Update texture bindings
-    glBindImageTexture(6, startTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
-    glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-    glBindImageTexture(0, currentxyDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-    glBindImageTexture(2, currentAngleDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-    glBindImageTexture(3, nextxyDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-    glBindImageTexture(5, nextAngleDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
 
     glutSwapBuffers();
@@ -370,7 +499,7 @@ void renderFunction() {
 
 
 void cleanup() {
-    glDeleteProgram(computeShaderProgram);
+    glDeleteProgram(CSanttestProgram);
     glDeleteTextures(1, &resultTexture);
 }
 
@@ -390,6 +519,7 @@ int main(int argc, char** argv) {
     glViewport(0, 0, simulationWidth, simulationHeight);
 
     glewInit();
+
 
     std::cout << "end3";
     init();

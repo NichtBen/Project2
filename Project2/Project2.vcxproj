@@ -129,6 +129,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="CSanttest.glsl" />
+    <None Include="CSblur.glsl" />
     <None Include="CStest.glsl" />
     <None Include="packages.config" />
   </ItemGroup>
