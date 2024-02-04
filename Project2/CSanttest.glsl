@@ -36,18 +36,20 @@ ivec2 computationPos;
 
 
 float clockwiseAngle(vec2 vector) {
-    // The vector (1, 0) is the positive x-axis
-    vec2 xAxis = vec2(1.0, 0.0);
+    // Avoid division by zero
+    if (vector.x == 0.0 && vector.y == 0.0) {
+        return 0.0;  // undefined angle, return a default value
+    }
 
-    // Calculate the dot product between the given vector and the positive x-axis
-    float dotProduct = dot(normalize(vector), xAxis);
+    // Calculate the dot product with the reference vector (1, 0)
+    float dotProduct = dot(normalize(vector), vec2(1.0, 0.0));
 
-    // Use arccosine to find the angle in radians
+    // Use acos to find the angle in radians
     float angle = acos(dotProduct);
 
-    // If the y-component of the vector is negative, it's in the clockwise direction
+    // Check the sign of the y-component to determine the quadrant
     if (vector.y < 0.0) {
-        angle = 2.0 * 3.14159265358979323846 - angle;
+        angle = 2.0 * 3.14159265358979323846 - angle;  // Adjust for the lower half of the unit circle
     }
 
     return angle;
@@ -78,22 +80,20 @@ void updateAgend() {
 
     vec2 direction = vec2(cos(currentAngle), sin(currentAngle));
     vec2 newPos = currentxy + direction * moveSpeed;
-    float newAngle=0;
-    if(newPos[0] < 0 || newPos[0] > worldWidth   )
-    {
-        direction[0] *= -1;
-        newPos = currentxy;
-        newAngle = clockwiseAngle(direction);
-
-    } else if(newPos[1] < 0 )//|| newPos[1] > height )
-    {
-        direction[1] *= -1;
-        newPos = currentxy;
-        newAngle = clockwiseAngle(direction);
+    float newAngle = currentAngle;
+        if(newPos[0] < 0 || newPos[0] > worldWidth   )
+        {
+            direction[0] *= -1;
+            newPos = currentxy + direction * moveSpeed;;
+            newAngle = clockwiseAngle(direction);
+        } 
+        else if(newPos[1] < 0 || newPos[1] > worldHeight )
+        {
+            direction[1] *= -1;
+            newPos = currentxy + direction * moveSpeed;;
+            newAngle = clockwiseAngle(direction);
     }
-
-    if(worldWidth == 0)
-    newPos[0] += -1;
+    
 
     // Write nextpos to output
     imageStore(nextagenddata_angle, computationPos, vec4(newAngle,0.0f, 0.0f, 0.0f));
@@ -107,6 +107,8 @@ void updateAgend() {
 void main() {
     
     computationPos = ivec2(gl_GlobalInvocationID.xy);
+
+    
     
     //current data in xy texture
     vec4 temp = imageLoad(currentagenddata_xy, computationPos);
@@ -115,6 +117,14 @@ void main() {
     temp = imageLoad(currentagenddata_angle, computationPos);
     currentAngle = temp[0];
     
+    
+    // Set the next color to white
+    vec4 t= vec4(0, 0, 0, 1);
+    
+    // Write the next color to the image
+    imageStore(Result, ivec2(currentxy), t);
+
+
 
     updateAgend();
 

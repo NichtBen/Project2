@@ -157,11 +157,13 @@ void initCSanttestTextures() {
 
 
 void initCSanttest() {
+    //select shader programm as target 
+    glUseProgram(computeShaderProgram);
+
+
     //set up shader constants worldwidth and worldhigh
     GLint widthLocation = glGetUniformLocation(computeShaderProgram, "worldWidth");
-    GLint heightLocation = glGetUniformLocation(computeShaderProgram, "worldheight");
-
-    
+    GLint heightLocation = glGetUniformLocation(computeShaderProgram, "worldHeight");
 
     glUniform1ui(widthLocation, worldWidth);
     glUniform1ui(heightLocation, worldHeight);
