@@ -22,7 +22,10 @@ int simulationWidth = 50;
 int simulationHeight = 20;
 float targetFrameRate = 15;
 float initialLifeAmount = 0.08;
-float dispersion = 0.97f;
+float dispersion = 0.98f;
+float moveSpeed = 1.0f;
+float steeringangle = 0.5f;
+float randomangle = 0.2f;
     //render variable
 //size of world
 int worldWidth = 250;
@@ -180,6 +183,19 @@ void updateCSanttestTextureBindings() {
     std::uniform_int_distribution<GLuint> dis(0, std::numeric_limits<GLuint>::max());
     GLuint randomSeed = dis(gen);
     glUniform1ui(randseedUniformLocation, randomSeed);
+
+
+    GLuint moveSpeedUniformLocation = glGetUniformLocation(CSanttestProgram, "moveSpeed");
+    glUniform1f(moveSpeedUniformLocation, moveSpeed);
+
+
+    GLuint steeringangleUniformLocation = glGetUniformLocation(CSanttestProgram, "steeringangle");
+    glUniform1f(steeringangleUniformLocation, steeringangle);
+
+
+    GLuint randomangleUniformLocation = glGetUniformLocation(CSanttestProgram, "randomangle");
+    glUniform1f(randomangleUniformLocation, randomangle);
+
 }
 
 void initCSanttestDebugTextureBindings() {
@@ -189,6 +205,19 @@ void initCSanttestDebugTextureBindings() {
     std::uniform_int_distribution<GLuint> dis(0, std::numeric_limits<GLuint>::max());
     GLuint randomSeed = dis(gen);
     glUniform1ui(randseedUniformLocation, randomSeed);
+
+
+    GLuint moveSpeedUniformLocation = glGetUniformLocation(CSanttestProgram, "moveSpeed");
+    glUniform1f(moveSpeedUniformLocation, moveSpeed);
+
+
+    GLuint steeringangleUniformLocation = glGetUniformLocation(CSanttestProgram, "steeringangle");
+    glUniform1f(steeringangleUniformLocation, steeringangle);
+
+
+    GLuint randomangleUniformLocation = glGetUniformLocation(CSanttestProgram, "randomangle");
+    glUniform1f(randomangleUniformLocation, randomangle);
+
 
     //set up for showing all data for debugging
     textures[0] = &startTexture;

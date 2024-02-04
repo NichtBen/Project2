@@ -21,13 +21,17 @@ uniform float deltaTime;
 uniform uint worldWidth;
 uniform uint worldHeight;
 
+//how tight agends sample infron of them
+uniform uint steeringangle;
+//how far the variation away from target is
+uniform uint randomangle;
 //passed seed for making random numbers
 uniform uint randseed;
 uint currentrandindex = 0;
 
 const float PI = 3.14159265358979323846;
 
-float moveSpeed = 1.0f;
+uniform float moveSpeed;
 
 //current data in x texture
 vec2 currentxy;
@@ -111,23 +115,23 @@ void updateAgend() {
     
     vec2 infront = newPos + direction * (1.0+ uintFloat(uint(getRandomNumber())));
 
-    float angle = 0.5;
+    float angle = steeringangle;
     mat2 rotationMatrix = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
     vec2 rotatedVector = rotationMatrix * direction;
     vec2 right = newPos + rotatedVector * (1.0+ uintFloat(uint(getRandomNumber())));
 
-    angle = -0.5;
+    angle = -steeringangle;
     rotationMatrix = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
     rotatedVector = rotationMatrix * direction;
     vec2 left = newPos + rotatedVector * (1.0+ uintFloat(uint(getRandomNumber())));
 
-    angle = 0.1;
+    angle = steeringangle;
     if(left[0] > max(infront[0], right[0])){
-        newAngle = newAngle + angle * uintFloat(getRandomNumber());
+        newAngle = newAngle + steeringangle * uintFloat(getRandomNumber());
     }if (infront[0] >= max(left[0], right[0])) {
-        newAngle = newAngle - 0.5*angle + angle * uintFloat(getRandomNumber());
+        newAngle = newAngle - 0.5*randomangle + randomangle * uintFloat(getRandomNumber());
     }if(right[0] > max(infront[0],left[0])){
-        newAngle = newAngle + angle * uintFloat(getRandomNumber());
+        newAngle = newAngle - steeringangle * uintFloat(getRandomNumber());
     }
 
     // Write nextpos to output
@@ -140,6 +144,7 @@ void updateAgend() {
 }
  
 void main() {
+if(moveSpeed == 0) return;
     computationPos = ivec2(gl_GlobalInvocationID.xy);
 
 
