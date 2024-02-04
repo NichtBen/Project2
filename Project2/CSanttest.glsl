@@ -18,8 +18,8 @@ uniform float deltaTime;
 
 
 // Computation variables
-uint width;
-uint height;
+uniform uint worldWidth;
+uniform uint worldHeight;
 
 const float PI = 3.14159265358979323846;
 
@@ -35,8 +35,28 @@ float currentAngle;
 ivec2 computationPos;
 
 
+float clockwiseAngle(vec2 vector) {
+    // The vector (1, 0) is the positive x-axis
+    vec2 xAxis = vec2(1.0, 0.0);
+
+    // Calculate the dot product between the given vector and the positive x-axis
+    float dotProduct = dot(normalize(vector), xAxis);
+
+    // Use arccosine to find the angle in radians
+    float angle = acos(dotProduct);
+
+    // If the y-component of the vector is negative, it's in the clockwise direction
+    if (vector.y < 0.0) {
+        angle = 2.0 * 3.14159265358979323846 - angle;
+    }
+
+    return angle;
+}
+
+
+
 // Simple hash function
-float hash(uint state) {
+uint hash(uint state) {
     state ^= 2747636419u;
     state *= 2654435769u;
     state ^= state >> 16;
@@ -47,18 +67,38 @@ float hash(uint state) {
 }
 
 // Float hash function
-float hashfloat(int state) {
+float hashIntIoFloat(int state) {
     return hash(state) / 2147483647.0;
 }
 
+
 void updateAgend() {
     // Calculate the new position based on the original currentxy
-    vec2 direction = vec2(cos(currentAngle * 2.0 * PI), sin(currentAngle * 2.0 * PI));
+    uint random = hash(uint(currentxy[0] * currentxy[1] * currentAngle));
+
+    vec2 direction = vec2(cos(currentAngle), sin(currentAngle));
     vec2 newPos = currentxy + direction * moveSpeed;
+    float newAngle=0;
+    if(newPos[0] < 0 || newPos[0] > worldWidth   )
+    {
+        direction[0] *= -1;
+        newPos = currentxy;
+        newAngle = clockwiseAngle(direction);
+
+    } else if(newPos[1] < 0 )//|| newPos[1] > height )
+    {
+        direction[1] *= -1;
+        newPos = currentxy;
+        newAngle = clockwiseAngle(direction);
+    }
+
+    if(worldWidth == 0)
+    newPos[0] += -1;
 
     // Write nextpos to output
+    imageStore(nextagenddata_angle, computationPos, vec4(newAngle,0.0f, 0.0f, 0.0f));
     imageStore(nextagenddata_xy, computationPos, vec4(newPos, 0, 0));
-    imageStore(nextagenddata_angle, computationPos, vec4(currentAngle,0.0f, 0.0f, 0.0f));
+        
 
     // Update currentxy after writing to the output texture
     currentxy = newPos;

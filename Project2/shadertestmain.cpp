@@ -10,7 +10,7 @@
 //window variable
 int windowWidth = 1000;
 int windowHeight = 800;
-bool keepUpdating = false;
+bool keepUpdating = true;
 bool debugging = false;
 int debugamountX = 3;
 int debugamountY = 2;
@@ -24,8 +24,8 @@ float targetFrameRate = 15;
 float initialLifeAmount = 0.08;
     //render variable
 //size of world
-int worldWidth = 900;
-int worldHeight = 500;
+int worldWidth = 250;
+int worldHeight = 340;
 
 GLuint computeShaderProgram;
 
@@ -98,17 +98,9 @@ void initCStest() {
     glBindImageTexture(0, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 }
 
-void initCSanttest() {
-    //Data textures
 
-    //set up for showing all data for debugging
-    textures[0] = &startTexture;
-    textures[2] = &currentxyDataTexture;
-    textures[4] = &currentAngleDataTexture;
-    textures[1] = &resultTexture;
-    textures[3] = &nextxyDataTexture;
-    textures[5] = &nextAngleDataTexture;
-
+//creates and binds all textures 
+void initCSanttestTextures() {
 
     // Create currendxdata texture holding xy data for agends
     glGenTextures(1, &currentxyDataTexture);
@@ -160,6 +152,34 @@ void initCSanttest() {
     // Set up the texture as an image in the compute shader
     glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
+
+}
+
+
+void initCSanttest() {
+    //set up shader constants worldwidth and worldhigh
+    GLint widthLocation = glGetUniformLocation(computeShaderProgram, "worldWidth");
+    GLint heightLocation = glGetUniformLocation(computeShaderProgram, "worldheight");
+
+    
+
+    glUniform1ui(widthLocation, worldWidth);
+    glUniform1ui(heightLocation, worldHeight);
+
+    //Data textures init moved away to initCSsantestTextures for better overview
+
+    initCSanttestTextures();
+
+    //set up for showing all data for debugging
+    textures[0] = &startTexture;
+    textures[2] = &currentxyDataTexture;
+    textures[4] = &currentAngleDataTexture;
+    textures[1] = &resultTexture;
+    textures[3] = &nextxyDataTexture;
+    textures[5] = &nextAngleDataTexture;
+
+
+    //create initial data
 
     // Create a random number generator
     std::random_device rd;
