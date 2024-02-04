@@ -21,6 +21,10 @@ uniform float deltaTime;
 uniform uint worldWidth;
 uniform uint worldHeight;
 
+//passed seed for making random numbers
+uniform uint randseed;
+uint currentrandindex = 0;
+
 const float PI = 3.14159265358979323846;
 
 float moveSpeed = 1.0f;
@@ -33,6 +37,30 @@ float currentAngle;
 
 //computationPos of thread on data texture
 ivec2 computationPos;
+
+
+
+// Simple hash function
+uint hash(uint state) {
+    state ^= 2747636419u;
+    state *= 2654435769u;
+    state ^= state >> 16;
+    state *= 2654435769u;
+    state ^= state >> 16;
+    state *= 2654435769u;
+    return state;
+}
+
+float uintFloat(uint a)
+{
+ return a / 2147483647.0;
+}
+
+uint getRandomNumber()
+{
+    return hash(uint(randseed+ computationPos[0] * computationPos[1]));
+    currentrandindex++;
+}
 
 
 float clockwiseAngle(vec2 vector) {
@@ -57,28 +85,11 @@ float clockwiseAngle(vec2 vector) {
 
 
 
-// Simple hash function
-uint hash(uint state) {
-    state ^= 2747636419u;
-    state *= 2654435769u;
-    state ^= state >> 16;
-    state *= 2654435769u;
-    state ^= state >> 16;
-    state *= 2654435769u;
-    return state;
-}
-
-// Float hash function
-float hashIntIoFloat(int state) {
-    return hash(state) / 2147483647.0;
-}
-
-
 
 
 void updateAgend() {
     // Calculate the new position based on the original currentxy
-    uint random = hash(uint(currentxy[0] * currentxy[1] * currentAngle));
+    uint random = getRandomNumber();
 
     vec2 direction = vec2(cos(currentAngle), sin(currentAngle));
     vec2 newPos = currentxy + direction * moveSpeed;
@@ -96,6 +107,28 @@ void updateAgend() {
             newAngle = clockwiseAngle(direction);
     }
     
+    //Sample 3 pixel infront, turn based on info, + little randomness
+    
+    vec2 infront = newPos + direction * (1.0+ uintFloat(uint(getRandomNumber())));
+
+    float angle = 0.5;
+    mat2 rotationMatrix = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+    vec2 rotatedVector = rotationMatrix * direction;
+    vec2 right = newPos + rotatedVector * (1.0+ uintFloat(uint(getRandomNumber())));
+
+    angle = -0.5;
+    rotationMatrix = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+    rotatedVector = rotationMatrix * direction;
+    vec2 left = newPos + rotatedVector * (1.0+ uintFloat(uint(getRandomNumber())));
+
+    angle = 0.1;
+    if(left[0] > max(infront[0], right[0])){
+        newAngle = newAngle + angle * uintFloat(getRandomNumber());
+    }if (infront[0] >= max(left[0], right[0])) {
+        newAngle = newAngle - 0.5*angle + angle * uintFloat(getRandomNumber());
+    }if(right[0] > max(infront[0],left[0])){
+        newAngle = newAngle + angle * uintFloat(getRandomNumber());
+    }
 
     // Write nextpos to output
     imageStore(nextagenddata_angle, computationPos, vec4(newAngle,0.0f, 0.0f, 0.0f));
@@ -107,8 +140,8 @@ void updateAgend() {
 }
  
 void main() {
-    
     computationPos = ivec2(gl_GlobalInvocationID.xy);
+
 
     
     

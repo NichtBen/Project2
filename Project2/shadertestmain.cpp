@@ -22,7 +22,7 @@ int simulationWidth = 50;
 int simulationHeight = 20;
 float targetFrameRate = 15;
 float initialLifeAmount = 0.08;
-float dispersion = 1.0f;
+float dispersion = 0.97f;
     //render variable
 //size of world
 int worldWidth = 250;
@@ -163,21 +163,32 @@ void initCStest()
 void updateCSanttestTextureBindings() {
     // Update texture bindings
     glBindImageTexture(6, startTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
-    glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     glBindImageTexture(0, currentxyDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     glBindImageTexture(2, currentAngleDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     glBindImageTexture(3, nextxyDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     glBindImageTexture(5, nextAngleDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
-    // ... (more bindings)
-
     // Select shader program as the target
-    glUseProgram(CSanttestProgram);  // You may need to change the program based on your needs
+    glUseProgram(CSanttestProgram);
     GLint timeUniformLocation = glGetUniformLocation(CSanttestProgram, "deltaTime");
     glUniform1f(timeUniformLocation, currentTime - previousTime);
+    //generate random seed
+    GLuint randseedUniformLocation = glGetUniformLocation(CSanttestProgram, "randseed");
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<GLuint> dis(0, std::numeric_limits<GLuint>::max());
+    GLuint randomSeed = dis(gen);
+    glUniform1ui(randseedUniformLocation, randomSeed);
 }
 
 void initCSanttestDebugTextureBindings() {
+    GLuint randseedUniformLocation = glGetUniformLocation(CSanttestProgram, "randseed");
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<GLuint> dis(0, std::numeric_limits<GLuint>::max());
+    GLuint randomSeed = dis(gen);
+    glUniform1ui(randseedUniformLocation, randomSeed);
 
     //set up for showing all data for debugging
     textures[0] = &startTexture;
@@ -192,12 +203,16 @@ void initCSanttestDebugTextureBindings() {
 
 //creates and binds all textures etc for render call
 void initCSanttestTextures() {
-    GLint timeUniformLocation = glGetUniformLocation(CSanttestProgram, "deltaTime");
-    // Pass time to the compute shader
+    //select shader programm as target 
     glUseProgram(CSanttestProgram);
-    glUniform1f(timeUniformLocation, currentTime - previousTime);
 
 
+    //set up shader constants worldwidth and worldhigh
+    GLint widthLocation = glGetUniformLocation(CSanttestProgram, "worldWidth");
+    GLint heightLocation = glGetUniformLocation(CSanttestProgram, "worldHeight");
+
+    glUniform1ui(widthLocation, worldWidth);
+    glUniform1ui(heightLocation, worldHeight);
 
     // Update texture bindings
     glBindImageTexture(6, startTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
@@ -262,21 +277,13 @@ void initCSanttestTextures() {
     glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
 
+    
+
     glUseProgram(0);
 }
 
 
 void initCSanttest() {
-    //select shader programm as target 
-    glUseProgram(CSanttestProgram);
-
-
-    //set up shader constants worldwidth and worldhigh
-    GLint widthLocation = glGetUniformLocation(CSanttestProgram, "worldWidth");
-    GLint heightLocation = glGetUniformLocation(CSanttestProgram, "worldHeight");
-
-    glUniform1ui(widthLocation, worldWidth);
-    glUniform1ui(heightLocation, worldHeight);
 
     //Data textures init moved away to initCSsantestTextures for better overview
 
