@@ -8,9 +8,12 @@
 #include <thread>
 
 //window variable
-int windowWidth = 1900;
-int windowHeight = 1040;
-bool keepUpdating = true;
+int windowWidth = 1000;
+int windowHeight = 800;
+bool keepUpdating = false;
+bool debugging = true;
+int debugamountX = 3;
+int debugamountY = 2;
 
 
 //Simulation variable
@@ -31,8 +34,10 @@ GLuint resultTexture;
 
 GLuint currentxyDataTexture;
 GLuint currentAngleDataTexture;
-GLuint lastxyDataTexture;
-GLuint lastAngleDataTexture;
+GLuint nextxyDataTexture;
+GLuint nextAngleDataTexture;
+
+GLuint* textures[6];
 
 int previousTime;
 int currentTime;
@@ -96,6 +101,15 @@ void initCStest() {
 void initCSanttest() {
     //Data textures
 
+    //set up for showing all data for debugging
+    textures[0] = &startTexture;
+    textures[2] = &currentxyDataTexture;
+    textures[4] = &currentAngleDataTexture;
+    textures[1] = &resultTexture;
+    textures[3] = &nextxyDataTexture;
+    textures[5] = &nextAngleDataTexture;
+
+
     // Create currendxdata texture holding xy data for agends
     glGenTextures(1, &currentxyDataTexture);
     glBindTexture(GL_TEXTURE_2D, currentxyDataTexture);
@@ -113,20 +127,20 @@ void initCSanttest() {
     glBindImageTexture(2, currentAngleDataTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
 
     // Create currendxdata texture holding x data for agends
-    glGenTextures(1, &lastxyDataTexture);
-    glBindTexture(GL_TEXTURE_2D, lastxyDataTexture);
+    glGenTextures(1, &nextxyDataTexture);
+    glBindTexture(GL_TEXTURE_2D, nextxyDataTexture);
     glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, simulationWidth, simulationHeight);
 
     // Set up the texture as an image in the compute shader
-    glBindImageTexture(3, lastxyDataTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+    glBindImageTexture(3, nextxyDataTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
 
     // Create currendxdata texture holding x data for agends
-    glGenTextures(1, &lastAngleDataTexture);
-    glBindTexture(GL_TEXTURE_2D, lastAngleDataTexture);
+    glGenTextures(1, &nextAngleDataTexture);
+    glBindTexture(GL_TEXTURE_2D, nextAngleDataTexture);
     glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, simulationWidth, simulationHeight);
 
     // Set up the texture as an image in the compute shader
-    glBindImageTexture(5, lastAngleDataTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+    glBindImageTexture(5, nextAngleDataTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
 
     // Graphic textures
 
@@ -154,24 +168,32 @@ void initCSanttest() {
     std::uniform_int_distribution<int> dis2(0, simulationHeight - 1);
     std::uniform_real_distribution<float> dis3(0, 1);
 
+
+    srand((unsigned)time(NULL));
     
     std::cout << "end7";
 
     // Set an initial xy   for agends
     glBindTexture(GL_TEXTURE_2D, currentxyDataTexture);
-    for (int i = 0; i < simulationWidth * simulationHeight; i++) 
+    for (int i = 0; i < simulationWidth; i++)
     {
-        float initialColor[4] = { dis3(gen) * worldWidth, dis3(gen) * worldHeight, 0.0f, 1.0f };  // random pos
-        glTexSubImage2D(GL_TEXTURE_2D, 0, dis(gen), dis2(gen), 1, 1, GL_RGBA, GL_FLOAT, initialColor);
+        for (int j = 0; j < simulationHeight; j++)
+        {
+            float initialColor[4] = { dis3(gen) * worldWidth, dis3(gen) * worldHeight, 0.0f, 1.0f };  // random pos
+            glTexSubImage2D(GL_TEXTURE_2D, 0, i,j, 1, 1, GL_RGBA, GL_FLOAT, initialColor);
+        }
     }
 
     std::cout << "end6";
     // Set an initial angle  for agends
     glBindTexture(GL_TEXTURE_2D, currentAngleDataTexture);
-    for (int i = 0; i < simulationWidth * simulationHeight; i++)
+    for (int i = 0; i < simulationWidth; i++)
     {
-        float initialColor2[4] = { dis3(gen) *2*PI, 0.0f, 0.0f, 1.0f };  // random angle
-        glTexSubImage2D(GL_TEXTURE_2D, 0, dis(gen), dis2(gen), 1, 1, GL_RGBA, GL_FLOAT, initialColor2);
+        for (int j = 0; j < simulationHeight; j++)
+        {
+            float initialColor2[4] = { dis3(gen) * 2 * PI, 0.0f, 0.0f, 1.0f };  // random angle
+            glTexSubImage2D(GL_TEXTURE_2D, 0, i,  j, 1, 1, GL_RGBA, GL_FLOAT, initialColor2);
+        }
     }
 }
 
@@ -229,6 +251,30 @@ void init() {
         glTexSubImage2D(GL_TEXTURE_2D, 0, dis(gen), dis2(gen), 1, 1, GL_RGBA, GL_FLOAT, initialColor);
 }
 
+
+void renderTextureToScreen(GLint texture, int startx, int starty, int width, int height,int i, int j) {
+
+    if (texture != NULL) {
+
+        glUseProgram(0); // Use fixed-function pipeline for rendering quad
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glBegin(GL_QUADS);
+        glTexCoord2f(i, j); glVertex2f(startx, starty);
+        glTexCoord2f(i + 1, j); glVertex2f(startx + width, starty);
+        glTexCoord2f(i + 1, j + 1); glVertex2f(startx + width, starty + height);
+        glTexCoord2f(i, j + 1); glVertex2f(startx, starty + height);
+        glEnd();
+
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_TEXTURE_2D);
+
+    }
+}
+
+
 void renderFunction() {
 
 
@@ -255,21 +301,21 @@ void renderFunction() {
     glDispatchCompute(simulationWidth / 8, simulationHeight / 8, 1);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-    // Use the resultTexture to render a quad
-    glUseProgram(0); // Use fixed-function pipeline for rendering quad
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, resultTexture);
+    //display the different texture for debugging, or only result:
+    
+    if (!debugging) {
+        renderTextureToScreen(resultTexture, 0, 0, simulationWidth, simulationHeight,0,0);
+    }
+    else{
+        for (int i = 0; i < debugamountX; i++) {
+            for (int j = 0; j < debugamountY; j++) {
+                int tempx = simulationWidth / debugamountX;
+                int tempy = simulationHeight / debugamountY;
+                renderTextureToScreen(*textures[i*debugamountY + j], tempx*i,tempy*j, tempx,tempy,i,j);
 
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f, 0.0f);
-    glTexCoord2f(1.0f, 0.0f); glVertex2f(simulationWidth, 0.0f);
-    glTexCoord2f(1.0f, 1.0f); glVertex2f(simulationWidth, simulationHeight);
-    glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, simulationHeight);
-    glEnd();
-
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glDisable(GL_TEXTURE_2D);
+            }
+        }
+    }
 
     // Swap textures
     GLuint tempTexture = startTexture;
@@ -277,20 +323,20 @@ void renderFunction() {
     //resultTexture = tempTexture;
 
     tempTexture = currentxyDataTexture;
-    currentxyDataTexture = lastxyDataTexture;
-    lastxyDataTexture = tempTexture;
+    currentxyDataTexture = nextxyDataTexture;
+    nextxyDataTexture = tempTexture;
 
     tempTexture = currentAngleDataTexture;
-    currentAngleDataTexture = lastAngleDataTexture;
-    lastAngleDataTexture = tempTexture;
+    currentAngleDataTexture = nextAngleDataTexture;
+    nextAngleDataTexture = tempTexture;
 
     // Update texture bindings
     glBindImageTexture(6, startTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
     glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
     glBindImageTexture(0, currentxyDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     glBindImageTexture(2, currentAngleDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-    glBindImageTexture(3, lastxyDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-    glBindImageTexture(5, lastAngleDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    glBindImageTexture(3, nextxyDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    glBindImageTexture(5, nextAngleDataTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
 
     glutSwapBuffers();

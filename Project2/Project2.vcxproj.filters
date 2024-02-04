@@ -17,6 +17,7 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="CStest.glsl" />
+    <None Include="CSanttest.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="freeglut_test.cpp">
