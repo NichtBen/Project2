@@ -22,6 +22,7 @@ int simulationWidth = 50;
 int simulationHeight = 20;
 float targetFrameRate = 15;
 float initialLifeAmount = 0.08;
+float dispersion = 1.0f;
     //render variable
 //size of world
 int worldWidth = 250;
@@ -332,20 +333,27 @@ void updateBlurTextureBindings() {
     glUseProgram(CSblurProgram);  
     GLint timeUniformLocation = glGetUniformLocation(CSblurProgram, "deltaTime");
     glUniform1f(timeUniformLocation, currentTime - previousTime);
+    GLint dispersionUniformhLocation = glGetUniformLocation(CSblurProgram, "dispersion");
+    glUniform1f(dispersionUniformhLocation, dispersion);
 }
 
 void initCSblurTextures() {
-    glUseProgram(CSblur);
-
-    glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-
+    // Select shader program as the target
+    glUseProgram(CSblurProgram);
+    GLint timeUniformLocation = glGetUniformLocation(CSblurProgram, "deltaTime");
+    glUniform1f(timeUniformLocation, currentTime - previousTime);
+    GLint dispersionUniformhLocation = glGetUniformLocation(CSblurProgram, "dispersion");
+    glUniform1f(dispersionUniformhLocation, dispersion);
+   
     glGenTextures(1, &resultTexture);
     glBindTexture(GL_TEXTURE_2D, resultTexture);
     glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, worldWidth, worldHeight);
 
     // Set up the texture as an image in the compute shader
-    glBindImageTexture(0, resultTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    
 
+    glUseProgram(0);
 }
 
 void initCSblur() 
