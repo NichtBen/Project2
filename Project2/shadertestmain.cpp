@@ -19,17 +19,17 @@ int debugamountY = 2;
 //Simulation variable
 //size of data textures --> amount of paralel agends
 int simulationWidth = 100;
-int simulationHeight = 10;
-float targetFrameRate = 10;
+int simulationHeight = 100;
+float targetFrameRate = 100;
 float initialLifeAmount = 0.08;
-float diffusion = 0.001f;
-float moveSpeed = 1.0f;
-float steeringangle = 0.0f;
-float randomangle = 0.2f;
+float diffusion = 0.03f;
+float moveSpeed = 2.0f;
+float steeringangle = 1.5f;
+float randomangle = 0.1f;
     //render variable
 //size of world
-int worldWidth = 8*40;
-int worldHeight = 8*40;
+int worldWidth = 4000;
+int worldHeight = 4000;
 
 GLuint CStestProgram;
 GLuint CSanttestProgram;

@@ -90,7 +90,6 @@ float clockwiseAngle(vec2 vector) {
 
 
 
-
 void updateAgend() {
     // Calculate the new position based on the original currentxy
     vec2 direction = vec2(cos(currentAngle), sin(currentAngle));
@@ -112,24 +111,34 @@ void updateAgend() {
     
     //Sample 3 pixel infront, turn based on info, + little randomness
     
-    vec2 infront = newPos + direction*2;
+    vec2 infront = newPos + direction*3;
 
-    float angle = steeringangle;
-    mat2 rotationMatrix = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+    mat2 rotationMatrix = mat2(cos(steeringangle), -sin(steeringangle), sin(steeringangle), cos(steeringangle));
     vec2 rotatedVector = rotationMatrix * direction*2;
-    vec2 left = newPos + rotatedVector*4 ;
+    vec2 left = newPos + rotatedVector ;
 
-    rotationMatrix = mat2(cos(-angle), -sin(-angle), sin(-angle), cos(-angle));
-    rotatedVector = rotationMatrix * direction*4;
-    vec2 right = newPos + rotatedVector*4;
+    mat2 rotationMatrix2 = mat2(cos(-steeringangle), -sin(-steeringangle), sin(-steeringangle), cos(-steeringangle));
+    rotatedVector = rotationMatrix2 * direction*2;
+    vec2 right = newPos + rotatedVector;
 
     vec4 leftColor = imageLoad(Result, ivec2(left));
     vec4 rightColor = imageLoad(Result, ivec2(right));
     vec4 infrontColor = imageLoad(Result, ivec2(infront));
 
+    float rand = uintFloat(getRandomNumber()) -0.5 * randomangle;
 
-   
-
+   if(leftColor[0] > rightColor[0] ){
+        if(leftColor[0] > infrontColor[0])
+        {
+            newAngle = currentAngle + 0.5 +rand;
+        } else {
+            newAngle = newAngle + rand;
+        }
+   } else if(rightColor[0] > infrontColor[0]){
+        newAngle = currentAngle - 0.5 +rand;
+   }  else if (infrontColor[0] > rightColor[0]) {
+            newAngle = newAngle + rand;
+   }
 
 
     // Write nextpos to output
@@ -170,7 +179,7 @@ if(moveSpeed == 0) return;
     
 
     // Set the next color to white
-    vec4 nextColor = vec4(1, 1, 1, 1);
+    vec4 nextColor = +  vec4(1, 1, 1, 1) * 4;
     
     // Write the next color to the image
     imageStore(Result, newPos, nextColor);
