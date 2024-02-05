@@ -18,18 +18,18 @@ int debugamountY = 2;
 
 //Simulation variable
 //size of data textures --> amount of paralel agends
-int simulationWidth = 50;
-int simulationHeight = 20;
-float targetFrameRate = 15;
+int simulationWidth = 100;
+int simulationHeight = 10;
+float targetFrameRate = 10;
 float initialLifeAmount = 0.08;
-float dispersion = 0.98f;
+float diffusion = 0.001f;
 float moveSpeed = 1.0f;
-float steeringangle = 0.5f;
+float steeringangle = 0.0f;
 float randomangle = 0.2f;
     //render variable
 //size of world
-int worldWidth = 250;
-int worldHeight = 340;
+int worldWidth = 8*40;
+int worldHeight = 8*40;
 
 GLuint CStestProgram;
 GLuint CSanttestProgram;
@@ -369,8 +369,8 @@ void updateBlurTextureBindings() {
     glUseProgram(CSblurProgram);  
     GLint timeUniformLocation = glGetUniformLocation(CSblurProgram, "deltaTime");
     glUniform1f(timeUniformLocation, currentTime - previousTime);
-    GLint dispersionUniformhLocation = glGetUniformLocation(CSblurProgram, "dispersion");
-    glUniform1f(dispersionUniformhLocation, dispersion);
+    GLint diffusionUniformhLocation = glGetUniformLocation(CSblurProgram, "diffusion");
+    glUniform1f(diffusionUniformhLocation, diffusion);
 }
 
 void initCSblurTextures() {
@@ -378,8 +378,8 @@ void initCSblurTextures() {
     glUseProgram(CSblurProgram);
     GLint timeUniformLocation = glGetUniformLocation(CSblurProgram, "deltaTime");
     glUniform1f(timeUniformLocation, currentTime - previousTime);
-    GLint dispersionUniformhLocation = glGetUniformLocation(CSblurProgram, "dispersion");
-    glUniform1f(dispersionUniformhLocation, dispersion);
+    GLint diffusionUniformhLocation = glGetUniformLocation(CSblurProgram, "diffusion");
+    glUniform1f(diffusionUniformhLocation, diffusion);
    
     glGenTextures(1, &resultTexture);
     glBindTexture(GL_TEXTURE_2D, resultTexture);
@@ -477,6 +477,17 @@ void renderFunction() {
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
     }
+    //first blur then CSanttest!!
+    if (CSblur)
+    {
+        //initialise texture context for shader
+        updateBlurTextureBindings();
+        // Dispatch the compute shader
+        glUseProgram(CSblurProgram);
+        glDispatchCompute(worldWidth / 8, worldHeight / 8, 1);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+    }
 
     if (CSanttest)
     {
@@ -489,16 +500,6 @@ void renderFunction() {
 
     }
 
-    if (CSblur)
-    {
-        //initialise texture context for shader
-        updateBlurTextureBindings();
-        // Dispatch the compute shader
-        glUseProgram(CSblurProgram);
-        glDispatchCompute(windowWidth / 8, windowHeight / 8, 1);
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-
-    }
 
 
     

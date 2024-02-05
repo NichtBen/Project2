@@ -62,7 +62,7 @@ float uintFloat(uint a)
 
 uint getRandomNumber()
 {
-    return hash(uint(randseed+ computationPos[0] * computationPos[1]));
+    return hash(uint(randseed+ computationPos[0] * computationPos[1])+currentrandindex);
     currentrandindex++;
 }
 
@@ -93,19 +93,18 @@ float clockwiseAngle(vec2 vector) {
 
 void updateAgend() {
     // Calculate the new position based on the original currentxy
-    uint random = getRandomNumber();
-
     vec2 direction = vec2(cos(currentAngle), sin(currentAngle));
     vec2 newPos = currentxy + direction * moveSpeed;
+
     float newAngle = currentAngle;
-        if(newPos[0] < 0 || newPos[0] > worldWidth   )
-        {
-            direction[0] *= -1;
-            newPos = currentxy + direction * moveSpeed;;
-            newAngle = clockwiseAngle(direction);
-        } 
+    if(newPos[0] < 0 || newPos[0] > worldWidth   )
+    {
+        direction[0] *= -1;
+        newPos = currentxy + direction * moveSpeed;;
+        newAngle = clockwiseAngle(direction);
+    } 
         else if(newPos[1] < 0 || newPos[1] > worldHeight )
-        {
+    {
             direction[1] *= -1;
             newPos = currentxy + direction * moveSpeed;;
             newAngle = clockwiseAngle(direction);
@@ -113,26 +112,25 @@ void updateAgend() {
     
     //Sample 3 pixel infront, turn based on info, + little randomness
     
-    vec2 infront = newPos + direction * (1.0+ uintFloat(uint(getRandomNumber())));
+    vec2 infront = newPos + direction*2;
 
     float angle = steeringangle;
     mat2 rotationMatrix = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-    vec2 rotatedVector = rotationMatrix * direction;
-    vec2 right = newPos + rotatedVector * (1.0+ uintFloat(uint(getRandomNumber())));
+    vec2 rotatedVector = rotationMatrix * direction*2;
+    vec2 left = newPos + rotatedVector*4 ;
 
-    angle = -steeringangle;
-    rotationMatrix = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-    rotatedVector = rotationMatrix * direction;
-    vec2 left = newPos + rotatedVector * (1.0+ uintFloat(uint(getRandomNumber())));
+    rotationMatrix = mat2(cos(-angle), -sin(-angle), sin(-angle), cos(-angle));
+    rotatedVector = rotationMatrix * direction*4;
+    vec2 right = newPos + rotatedVector*4;
 
-    angle = steeringangle;
-    if(left[0] > max(infront[0], right[0])){
-        newAngle = newAngle + steeringangle * uintFloat(getRandomNumber());
-    }if (infront[0] >= max(left[0], right[0])) {
-        newAngle = newAngle - 0.5*randomangle + randomangle * uintFloat(getRandomNumber());
-    }if(right[0] > max(infront[0],left[0])){
-        newAngle = newAngle - steeringangle * uintFloat(getRandomNumber());
-    }
+    vec4 leftColor = imageLoad(Result, ivec2(left));
+    vec4 rightColor = imageLoad(Result, ivec2(right));
+    vec4 infrontColor = imageLoad(Result, ivec2(infront));
+
+
+   
+
+
 
     // Write nextpos to output
     imageStore(nextagenddata_angle, computationPos, vec4(newAngle,0.0f, 0.0f, 0.0f));
@@ -153,11 +151,14 @@ if(moveSpeed == 0) return;
     //current data in xy texture
     vec4 temp = imageLoad(currentagenddata_xy, computationPos);
     currentxy = vec2(temp[0],temp[1]);
+
+    //current color on result texture
+    vec4 currentColor = imageLoad(Result, ivec2(currentxy));
+
     //current data in angle texture
     temp = imageLoad(currentagenddata_angle, computationPos);
     currentAngle = temp[0];
-    
-    
+
 
 
 
@@ -169,7 +170,7 @@ if(moveSpeed == 0) return;
     
 
     // Set the next color to white
-    vec4 nextColor = vec4(1, 0, 0, 1);
+    vec4 nextColor = vec4(1, 1, 1, 1);
     
     // Write the next color to the image
     imageStore(Result, newPos, nextColor);

@@ -13,12 +13,21 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\shaders">
+      <UniqueIdentifier>{fc19398c-5d3e-449d-8c98-3b06fe7841b3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="CStest.glsl" />
-    <None Include="CSanttest.glsl" />
-    <None Include="CSblur.glsl" />
+    <None Include="CSblur.glsl">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="CSanttest.glsl">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="CStest.glsl">
+      <Filter>Source Files\shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="freeglut_test.cpp">

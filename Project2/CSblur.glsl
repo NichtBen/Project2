@@ -4,11 +4,16 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(binding = 7, rgba32f) uniform image2D targetTexture;
 
-uniform float dispersion;
+uniform float diffusion;
+uniform float evaporation;
+uniform float deltaTime;
 
 void main() {
     ivec2 computationPos = ivec2(gl_GlobalInvocationID.xy);
     vec4 mixedColor = vec4(0, 0, 0, 0);
+    vec4 currentColor = imageLoad(targetTexture, computationPos);
+
+
 
     // Iterate over 3x3 grid
     for (int i = -1; i <= 1; i++) {
@@ -19,7 +24,8 @@ void main() {
         }
     }
 
-    vec4 nextColor = mixedColor * (1.0 / 9.0) *dispersion;
+    
+    vec4 nextColor = currentColor + (mixedColor * (1.0 / 9.0) - currentColor)*0.1  - vec4(diffusion,diffusion,diffusion,diffusion);
 
     // Write color to the image
     imageStore(targetTexture, computationPos, nextColor);
