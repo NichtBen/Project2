@@ -8,8 +8,8 @@
 #include <thread>
 
 //window variable
-int windowWidth = 1000;
-int windowHeight = 800;
+int windowWidth = 1900;
+int windowHeight = 1000;
 bool keepUpdating = true;
 bool debugging = false;
 int debugamountX = 3;
@@ -18,18 +18,18 @@ int debugamountY = 2;
 
 //Simulation variable
 //size of data textures --> amount of paralel agends
-int simulationWidth = 100;
-int simulationHeight = 100;
-float targetFrameRate = 00;
+int simulationWidth = 1000;
+int simulationHeight = 1000;
+float targetFrameRate = 60;
 float initialLifeAmount = 0.08;
-float diffusion = 0.05f;
-float moveSpeed = 0.8f;
-float steeringangle = 0.2f;
-float randomangle = 0.05f;
+float diffusion = 0.2f;
+float moveSpeed = 1.0f;
+float steeringangle = 0.3f;
+float randomangle = 0.1f;
     //render variable
 //size of world
-int worldWidth = 800;
-int worldHeight = 800;
+int worldWidth = 2500;
+int worldHeight = 3400;
 
 GLuint CStestProgram;
 GLuint CSanttestProgram;
@@ -164,6 +164,10 @@ void initCStest()
 }
 
 void updateCSanttestTextureBindings() {
+
+    // Select shader program as the target
+    glUseProgram(CSanttestProgram);
+
     // Update texture bindings
     glBindImageTexture(6, startTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
     glBindImageTexture(7, resultTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
@@ -174,7 +178,7 @@ void updateCSanttestTextureBindings() {
 
     
     GLint timeUniformLocation = glGetUniformLocation(CSanttestProgram, "deltaTime");
-    glUniform1f(timeUniformLocation, currentTime - previousTime);
+    glUniform1f(timeUniformLocation, (currentTime - previousTime)/(1000/targetFrameRate));
     //generate random seed
     GLuint randseedUniformLocation = glGetUniformLocation(CSanttestProgram, "randseed");
     std::random_device rd;
@@ -194,8 +198,6 @@ void updateCSanttestTextureBindings() {
 
     GLuint randomangleUniformLocation = glGetUniformLocation(CSanttestProgram, "randomangle");
     glUniform1f(randomangleUniformLocation, randomangle);
-    // Select shader program as the target
-    glUseProgram(CSanttestProgram);
 }
 
 void initCSanttestDebugTextureBindings() {
@@ -216,6 +218,10 @@ void initCSanttestDebugTextureBindings() {
 void initCSanttestTextures() {
     //select shader programm as target 
     glUseProgram(CSanttestProgram);
+
+
+    GLint timeUniformLocation = glGetUniformLocation(CSanttestProgram, "deltaTime");
+    glUniform1f(timeUniformLocation, (currentTime - previousTime) / (1000.0 / targetFrameRate));
 
     GLuint randseedUniformLocation = glGetUniformLocation(CSanttestProgram, "randseed");
     std::random_device rd;
@@ -369,7 +375,7 @@ void updateBlurTextureBindings() {
     // Select shader program as the target
     glUseProgram(CSblurProgram);  
     GLint timeUniformLocation = glGetUniformLocation(CSblurProgram, "deltaTime");
-    glUniform1f(timeUniformLocation, currentTime - previousTime);
+    glUniform1f(timeUniformLocation, (currentTime - previousTime) / (1000 / targetFrameRate));
     GLint diffusionUniformhLocation = glGetUniformLocation(CSblurProgram, "diffusion");
     glUniform1f(diffusionUniformhLocation, diffusion);
 }

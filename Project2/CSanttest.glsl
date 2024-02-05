@@ -93,56 +93,63 @@ float clockwiseAngle(vec2 vector) {
 void updateAgend() {
     // Calculate the new position based on the original currentxy
     vec2 direction = vec2(cos(currentAngle), sin(currentAngle));
-    vec2 newPos = currentxy + direction * moveSpeed;
+    vec2 newPos = currentxy + direction * moveSpeed ;
 
     float newAngle = currentAngle;
-    if(newPos[0] < 0 || newPos[0] > worldWidth   )
+    if(newPos[0] < 0 || newPos[0] > worldWidth )
     {
+        newPos = currentxy + direction * -1 * moveSpeed;
         direction[0] *= -1;
-        newPos = currentxy + direction * moveSpeed;;
         newAngle = clockwiseAngle(direction);
     } 
         else if(newPos[1] < 0 || newPos[1] > worldHeight )
     {
+            newPos = currentxy + direction * -1 * moveSpeed;
             direction[1] *= -1;
-            newPos = currentxy + direction * moveSpeed;;
             newAngle = clockwiseAngle(direction);
     }
     
     //Sample 3 pixel infront, turn based on info, + little randomness
     
-    vec2 infront = newPos + direction*5;
+    int sensorReach = 3;
+
+    vec2 infront = newPos + direction * sensorReach;
 
     mat2 rotationMatrix = mat2(cos(steeringangle), -sin(steeringangle), sin(steeringangle), cos(steeringangle));
-    vec2 rotatedVector = rotationMatrix * direction*5;
+    vec2 rotatedVector = rotationMatrix * direction*sensorReach;
     vec2 left = newPos + rotatedVector ;
 
     mat2 rotationMatrix2 = mat2(cos(-steeringangle), -sin(-steeringangle), sin(-steeringangle), cos(-steeringangle));
-    rotatedVector = rotationMatrix2 * direction*5;
-    vec2 right = newPos + rotatedVector;
+    vec2 rotatedVector2 = rotationMatrix2 * direction *sensorReach;
+    vec2 right = newPos + rotatedVector2;
 
     vec4 leftColor = imageLoad(Result, ivec2(left));
     vec4 rightColor = imageLoad(Result, ivec2(right));
     vec4 infrontColor = imageLoad(Result, ivec2(infront));
 
-    float rand = (uintFloat(getRandomNumber()) ) * randomangle;
-
+    float rand =(0.5- (uintFloat(getRandomNumber()) )) * randomangle;
+    
 
    if(leftColor[0] > rightColor[0] ){
         if(leftColor[0] > infrontColor[0])
         {
-            newAngle = currentAngle + 0.5 +rand;
+            newAngle = mod(currentAngle - steeringangle,2*PI);
         } else {
-            newAngle = newAngle + rand;
+            
         }
-   } else if(rightColor[0] > infrontColor[0]){
-        newAngle = currentAngle  +rand;
-   }  else if (infrontColor[0] > rightColor[0]) {
-            newAngle = newAngle + rand;
-   } else
+   } 
+   else if(rightColor[0] > infrontColor[0])
    {
-        newAngle = currentAngle  *rand;
+            newAngle = mod(currentAngle + steeringangle,2*PI);
+   }  
+   else if (infrontColor[0] > rightColor[0]) 
+   {
+            
+   } 
+   else
+   {
    }
+
 
 
 
@@ -184,7 +191,14 @@ if(moveSpeed == 0) return;
     
 
     // Set the next color to white
-    vec4 nextColor = currentColor +   vec4(1, 1, 1, 1) * 0.5;
+    vec4 nextColor =   currentColor +  vec4(1, 0, 0, 0)*0.5 ;
+
+    nextColor[2] = (nextColor[0]/10);
+    nextColor[1] = (nextColor[0]/100);
+    nextColor[3] = (nextColor[0]/1000);
+
+
+
     
     // Write the next color to the image
     imageStore(Result, newPos, nextColor);
