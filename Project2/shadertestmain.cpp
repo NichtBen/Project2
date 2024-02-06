@@ -24,12 +24,12 @@ float targetFrameRate = 60;
 float initialLifeAmount = 0.08;
 float diffusion = 0.2f;
 float moveSpeed = 1.0f;
-float steeringangle = 0.3f;
-float randomangle = 0.1f;
+float steeringangle = 0.2f;
+float randomangle = 0.05f;
     //render variable
 //size of world
-int worldWidth = 2500;
-int worldHeight = 3400;
+int worldWidth = 1600;
+int worldHeight = 1000;
 
 GLuint CStestProgram;
 GLuint CSanttestProgram;
