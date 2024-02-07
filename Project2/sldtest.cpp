@@ -15,12 +15,11 @@ int windowHeight = 1000;
 
 class OpenGLWindow {
 
-private:
+public:
     SDL_Window* window = nullptr;
     SDL_GLContext glContext = nullptr;
     int screenWidth;
     int screenHeight;
-public:
     //window variable
     bool keepUpdating = true;
     bool debugging = false;
@@ -30,8 +29,8 @@ public:
 
     //Simulation variable
     //size of data textures --> amount of paralel agends
-    int simulationWidth = 1000;
-    int simulationHeight = 1000;
+    int simulationWidth = 500;
+    int simulationHeight = 500;
     float targetFrameRate = 60;
     float initialLifeAmount = 0.08;
     float diffusion = 0.2f;
@@ -70,6 +69,14 @@ public:
 
     OpenGLWindow(int width, int height) : screenWidth(width), screenHeight(height) {}
 
+
+    void pauseSimulation() {
+
+    }
+
+    void continueSimulation() {
+
+    }
 
 
     GLuint LoadComputeShader(const char* shaderPath) {
@@ -435,7 +442,7 @@ public:
         screenHeight = windowHeight;
 
         // Create a window
-        window = SDL_CreateWindow("OpenGL Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+        window = SDL_CreateWindow("OpenGL Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
         if (window == nullptr) {
             std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
             SDL_Quit();
@@ -640,6 +647,11 @@ public:
 
 };
 
+void resizeViewport(int width, int height) {
+    // Update the OpenGL viewport to match the window size
+    glViewport(0, 0, width, height);
+}
+
 int sdltest_main(int argc, char* argv[]) {
     OpenGLWindow window(windowWidth, windowHeight);
 
@@ -648,7 +660,6 @@ int sdltest_main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::cout << " error?main:" << glGetError() << "\n";
 
     bool quit = false;
     SDL_Event event;
@@ -656,8 +667,12 @@ int sdltest_main(int argc, char* argv[]) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 quit = true;
+            } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                // If the window size changed, update the viewport
+                int width = event.window.data1;
+                int height = event.window.data2;
+                resizeViewport(width, height);
             }
-            std::cout << " error?main:" << glGetError() << "\n";
         }
 
         window.render();
