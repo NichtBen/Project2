@@ -28,6 +28,7 @@
     <None Include="CStest.glsl">
       <Filter>Source Files\shaders</Filter>
     </None>
+    <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="freeglut_test.cpp">
@@ -36,8 +37,28 @@
     <ClCompile Include="shadertestmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GUIhandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sldtest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="goal.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="shadertestmain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Desktop\SDL2-2.30.0\include\SDL.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sldtest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

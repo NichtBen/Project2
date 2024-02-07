@@ -1,15 +1,27 @@
 #include <GL/glew.h>
-#include <GL/freeglut.h>
+#include <SDL.h>
 #include <iostream>
+#include <SDL.h>
 #include <fstream>
 #include <sstream>
 #include <chrono>
 #include <random>
 #include <thread>
-namespace ShaderTest {
+#include <chrono>
+
+
+int windowWidth = 1900;
+int windowHeight = 1000;
+
+class OpenGLWindow {
+
+private:
+    SDL_Window* window = nullptr;
+    SDL_GLContext glContext = nullptr;
+    int screenWidth;
+    int screenHeight;
+public:
     //window variable
-    int windowWidth = 1900;
-    int windowHeight = 1000;
     bool keepUpdating = true;
     bool debugging = false;
     int debugamountX = 3;
@@ -28,8 +40,8 @@ namespace ShaderTest {
     float randomangle = 0.05f;
     //render variable
 //size of world
-    int worldWidth = 1600;
-    int worldHeight = 1000;
+    int worldWidth = 3200;
+    int worldHeight = 2000;
 
     GLuint CStestProgram;
     GLuint CSanttestProgram;
@@ -54,6 +66,10 @@ namespace ShaderTest {
     int previousTime;
     int currentTime;
     const float PI = 3.14159265358979323846;
+
+
+    OpenGLWindow(int width, int height) : screenWidth(width), screenHeight(height) {}
+
 
 
     GLuint LoadComputeShader(const char* shaderPath) {
@@ -319,7 +335,6 @@ namespace ShaderTest {
         glUseProgram(0);
     }
 
-
     void initCSanttest() {
 
         //Data textures init moved away to initCSsantestTextures for better overview
@@ -405,15 +420,72 @@ namespace ShaderTest {
         initCSblurTextures();
     }
 
-    void init() {
-        // Adjust the viewport size to match the desired resolution
-        glViewport(0, 0, simulationWidth, simulationHeight);
+    bool init() {
+
+        std::cout << " error?:" << glGetError() << "\n";
+        std::cout << " error?:" << glGetError() << "\n";
+        // Initialize SDL
+        if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+            std::cerr << "SDL initialization failed: " << SDL_GetError() << std::endl;
+            return false;
+        }
+
+        // Adjust window size based on screenWidth and screenHeight
+        screenWidth = windowWidth;
+        screenHeight = windowHeight;
+
+        // Create a window
+        window = SDL_CreateWindow("OpenGL Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+        if (window == nullptr) {
+            std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
+            SDL_Quit();
+            return false;
+        }
+
+        // Create an OpenGL context
+        glContext = SDL_GL_CreateContext(window);
+        if (glContext == nullptr) {
+            std::cerr << "OpenGL context creation failed: " << SDL_GetError() << std::endl;
+            SDL_DestroyWindow(window);
+            SDL_Quit();
+            return false;
+        }
+
+        // Initialize GLEW
+        GLenum glewInitResult = glewInit();
+        if (glewInitResult != GLEW_OK) {
+            std::cerr << "GLEW initialization failed: " << glewGetErrorString(glewInitResult) << std::endl;
+            SDL_GL_DeleteContext(glContext);
+            SDL_DestroyWindow(window);
+            SDL_Quit();
+            return false;
+        }
+
+
+        std::cout << " error?6:" << glGetError() << "\n";
+
+        // Set up OpenGL viewport
+        glViewport(0, 0, screenWidth, screenHeight);
+
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0, simulationWidth, 0, simulationHeight, -1, 1);
+        glMatrixMode(GL_MODELVIEW);
+
+        glewInit();
+
+
+
+
+
+        std::cout << "end3" << glGetError();
 
 
         // Load compute shader
 
 
-        std::cout << "end3.1";
+        std::cout << "end3.1" << glGetError();
 
         //only init the shader currently used in computeShaderPath
         if (CStest) {
@@ -430,48 +502,40 @@ namespace ShaderTest {
         }
 
 
-
+        return true;
 
     }
 
 
-    void renderTextureToScreen(GLint texture, int startx, int starty, int width, int height, int i, int j) {
+        void renderTextureToScreen(GLint texture, int startx, int starty, int width, int height) {
+            if (texture != NULL) {
+                // Bind your texture
+                glEnable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, texture); 
 
-        if (texture != NULL) {
-
-            glUseProgram(0); // Use fixed-function pipeline for rendering quad
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, texture);
-
-            glBegin(GL_QUADS);
-            glTexCoord2f(i, j); glVertex2f(startx, starty);
-            glTexCoord2f(i + 1, j); glVertex2f(startx + width, starty);
-            glTexCoord2f(i + 1, j + 1); glVertex2f(startx + width, starty + height);
-            glTexCoord2f(i, j + 1); glVertex2f(startx, starty + height);
-            glEnd();
-
-
-            glBindTexture(GL_TEXTURE_2D, 0);
-            glDisable(GL_TEXTURE_2D);
-
+                // Draw a textured quad
+                glBegin(GL_QUADS);
+                glTexCoord2f(0.0f, 0.0f); glVertex2f(startx, starty);                   // Bottom-left corner
+                glTexCoord2f(1.0f, 0.0f); glVertex2f(startx + width, starty);            // Bottom-right corner
+                glTexCoord2f(1.0f, 1.0f); glVertex2f(startx + width, starty + height);   // Top-right corner
+                glTexCoord2f(0.0f, 1.0f); glVertex2f(startx, starty + height);           // Top-left corner
+                glEnd();
+            }
         }
-    }
+    
 
 
-    void renderFunction() {
+    void render() {
 
 
 
         // Get the current time
-        currentTime = glutGet(GLUT_ELAPSED_TIME);
+        currentTime = clock();
 
         if (targetFrameRate != 0 && currentTime - previousTime < 1000 / targetFrameRate) {
             return;
         }
 
-        // Clear the color buffer to black
-        glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
 
 
 
@@ -512,21 +576,35 @@ namespace ShaderTest {
 
 
 
+
+
+        // Clear the color buffer to black
+        glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0, screenWidth, 0, screenHeight, -1, 1);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+
         //display the different texture for debugging, or only result:
 
+        glBindTexture(GL_TEXTURE_2D, resultTexture);
         if (!debugging) {
-            renderTextureToScreen(resultTexture, 0, 0, simulationWidth, simulationHeight, 0, 0);
+            renderTextureToScreen(resultTexture, 0, 0, screenWidth, screenHeight);
         }
         else {
             for (int i = 0; i < debugamountX; i++) {
                 for (int j = 0; j < debugamountY; j++) {
                     int tempx = simulationWidth / debugamountX;
                     int tempy = simulationHeight / debugamountY;
-                    renderTextureToScreen(*textures[i * debugamountY + j], tempx * i, tempy * j, tempx, tempy, i, j);
+                    renderTextureToScreen(*textures[i * debugamountY + j], tempx * i, tempy * j, tempx, tempy);
 
                 }
             }
         }
+
 
         // Swap textures
         GLuint tempTexture = startTexture;
@@ -541,58 +619,50 @@ namespace ShaderTest {
         currentAngleDataTexture = nextAngleDataTexture;
         nextAngleDataTexture = tempTexture;
 
+        // Swap buffers
+        SDL_GL_SwapWindow(window);
 
-
-        glutSwapBuffers();
-
-        previousTime = currentTime;
-
-        glutPostRedisplay();
-    }
-
-
-    void cleanup() {
-        glDeleteProgram(CSanttestProgram);
-        glDeleteTextures(1, &resultTexture);
-    }
-
-    int shadertest_main(int argc, char** argv) {
-        std::cout << "entry to shadertest \n";
-        glutInit(&argc, argv);
-
-        // Set initial window size
-        glutInitWindowSize(windowWidth, windowHeight);
-
-        glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
-        glutCreateWindow("Compute Shader Test");
-
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glOrtho(0, simulationWidth, 0, simulationHeight, -1, 1);
-        glMatrixMode(GL_MODELVIEW);
-        glViewport(0, 0, simulationWidth, simulationHeight);
-
-        glewInit();
-
-
-        std::cout << "end3";
-        init();
-
-        std::cout << "end2.5";
-        //makes it so it is updated every click?
-        glutDisplayFunc(renderFunction);
-        //makes it so it is always updated, pretty fast
-        if (keepUpdating) {
-            glutIdleFunc(renderFunction);
+        // Check for OpenGL errors
+        GLenum error = glGetError();
+        if (error != GL_NO_ERROR) {
+            std::cerr << "OpenGL error: " << error << std::endl;
         }
 
-        std::cout << "end2";
-        glutMainLoop();
-
-        cleanup();
-        std::cout << "end";
-
-        return 0;
+        previousTime = currentTime;
     }
 
+    void cleanup() {
+        SDL_GL_DeleteContext(glContext);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+    }
+
+
+};
+
+int sdltest_main(int argc, char* argv[]) {
+    OpenGLWindow window(windowWidth, windowHeight);
+
+
+    if (!window.init()) {
+        return 1;
+    }
+
+    std::cout << " error?main:" << glGetError() << "\n";
+
+    bool quit = false;
+    SDL_Event event;
+    while (!quit) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                quit = true;
+            }
+            std::cout << " error?main:" << glGetError() << "\n";
+        }
+
+        window.render();
+    }
+
+    window.cleanup();
+    return 0;
 }
