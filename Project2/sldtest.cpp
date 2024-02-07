@@ -675,6 +675,7 @@ int sdltest_main(int argc, char* argv[]) {
             }
         }
 
+
         window.render();
     }
 
