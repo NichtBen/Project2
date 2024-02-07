@@ -71,11 +71,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\VisualStudioLibs\SDL2-2.30.0\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\VisualStudioLibs\SDL2-2.30.0\include;C:\VisualStudioLibs\dear-imgui;$(IncludePath)</IncludePath>
     <LibraryPath>C:\VisualStudioLibs\SDL2-2.30.0\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\VisualStudioLibs\SDL2-2.30.0\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\VisualStudioLibs\SDL2-2.30.0\include;C:\VisualStudioLibs\dear-imgui;$(IncludePath)</IncludePath>
     <LibraryPath>C:\VisualStudioLibs\SDL2-2.30.0\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -154,7 +154,6 @@
     <Text Include="goal.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\Desktop\SDL2-2.30.0\include\SDL.h" />
     <ClInclude Include="shadertestmain.h" />
     <ClInclude Include="sldtest.h" />
   </ItemGroup>

@@ -54,9 +54,6 @@
     <ClInclude Include="shadertestmain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\Desktop\SDL2-2.30.0\include\SDL.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="sldtest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
