@@ -10,16 +10,44 @@
 #include <chrono>
 
 
-int windowWidth = 1900;
-int windowHeight = 1000;
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl2.h"
+#include "imgui/imgui_impl_opengl3.h"
 
-class OpenGLWindow {
+
+std::atomic<bool> stopFlag(false);
+
+
+
+int maxSimulationWindowWidth = 800;
+int maxSimulationWindowHeight = 600;
+
+int simulationWindowWidth = 800;
+int simulationWindowHeight = 600;
+
+int GUIWindowWidth = 800;
+int GUIWindowHeight = 600;
+
+class WindowInterface {
+public:
+    virtual bool init() = 0;
+    virtual void render() = 0;
+    virtual void cleanup() = 0;
+    virtual ~WindowInterface() {}
+    virtual SDL_Window* getWindow() = 0; // Getter for window
+    virtual SDL_GLContext getGLContext() = 0; // Getter for GL context
+    virtual int getWidth() = 0;
+    virtual int getHeight() = 0;
+};
+
+class OpenGLSimulationWindow : public WindowInterface{
 
 public:
     SDL_Window* window = nullptr;
     SDL_GLContext glContext = nullptr;
-    int screenWidth;
-    int screenHeight;
+    int windowWidth;
+    int windowHeight;
+    const char* title;
     //window variable
     bool keepUpdating = true;
     bool debugging = false;
@@ -29,18 +57,19 @@ public:
 
     //Simulation variable
     //size of data textures --> amount of paralel agends
-    int simulationWidth = 500;
-    int simulationHeight = 500;
+    int maxSimulationWidth = 100;
+    int maxSimulationHeight = 100;
+    int simulationWidth = 100;
+    int simulationHeight = 100;
     float targetFrameRate = 60;
-    float initialLifeAmount = 0.08;
     float diffusion = 0.2f;
     float moveSpeed = 1.0f;
     float steeringangle = 0.2f;
     float randomangle = 0.05f;
     //render variable
 //size of world
-    int worldWidth = 3200;
-    int worldHeight = 2000;
+    int worldWidth = 800;
+    int worldHeight = 600;
 
     GLuint CStestProgram;
     GLuint CSanttestProgram;
@@ -66,16 +95,41 @@ public:
     int currentTime;
     const float PI = 3.14159265358979323846;
 
+    bool paused = false;
 
-    OpenGLWindow(int width, int height) : screenWidth(width), screenHeight(height) {}
+    int getWidth() override {
+        return windowWidth;
+    }
+
+    int getHeight() override {
+        return windowHeight;
+    }
+
+    bool isPaused() {
+        return paused;
+    }
+
+    SDL_Window* getWindow() override{
+        return window;
+    }
+
+    SDL_GLContext getGLContext() override {
+        return glContext;
+    }
+
+    OpenGLSimulationWindow(const char* newTitle, int width, int height) : windowWidth(width), windowHeight(height), title(newTitle)
+    {
+
+        init();
+    }
 
 
     void pauseSimulation() {
-
+        paused = true;
     }
 
     void continueSimulation() {
-
+        paused = false;
     }
 
 
@@ -176,14 +230,7 @@ public:
         std::mt19937 gen(rd());
         std::uniform_int_distribution<int> dis(0., simulationWidth - 1);
         std::uniform_int_distribution<int> dis2(0, simulationHeight - 1);
-        // Rebind startTexture before the loop
-        glBindTexture(GL_TEXTURE_2D, startTexture);
-
-        // Set an initial red pixel in the startTexture
-        float initialColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };  // Red color
-        for (int i = 0; i < simulationWidth * simulationHeight * initialLifeAmount; i++)
-            glTexSubImage2D(GL_TEXTURE_2D, 0, dis(gen), dis2(gen), 1, 1, GL_RGBA, GL_FLOAT, initialColor);
-
+        
         glUseProgram(0);
     }
 
@@ -427,7 +474,7 @@ public:
         initCSblurTextures();
     }
 
-    bool init() {
+    bool init() override {
 
         std::cout << " error?:" << glGetError() << "\n";
         std::cout << " error?:" << glGetError() << "\n";
@@ -437,12 +484,12 @@ public:
             return false;
         }
 
-        // Adjust window size based on screenWidth and screenHeight
-        screenWidth = windowWidth;
-        screenHeight = windowHeight;
+        // Adjust window size based on windowWidth and windowHeight
+        windowWidth = simulationWindowWidth;
+        windowHeight = simulationWindowHeight;
 
         // Create a window
-        window = SDL_CreateWindow("OpenGL Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+        window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
         if (window == nullptr) {
             std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
             SDL_Quit();
@@ -472,7 +519,7 @@ public:
         std::cout << " error?6:" << glGetError() << "\n";
 
         // Set up OpenGL viewport
-        glViewport(0, 0, screenWidth, screenHeight);
+        glViewport(0, 0, windowWidth, windowHeight);
 
 
         glMatrixMode(GL_PROJECTION);
@@ -533,7 +580,8 @@ public:
 
 
     void render() {
-
+        if (paused)
+            return;
 
 
         // Get the current time
@@ -590,7 +638,7 @@ public:
         glClear(GL_COLOR_BUFFER_BIT);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        glOrtho(0, screenWidth, 0, screenHeight, -1, 1);
+        glOrtho(0, windowWidth, 0, windowHeight, -1, 1);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
@@ -599,7 +647,7 @@ public:
 
         glBindTexture(GL_TEXTURE_2D, resultTexture);
         if (!debugging) {
-            renderTextureToScreen(resultTexture, 0, 0, screenWidth, screenHeight);
+            renderTextureToScreen(resultTexture, 0, 0, windowWidth, windowHeight);
         }
         else {
             for (int i = 0; i < debugamountX; i++) {
@@ -647,37 +695,233 @@ public:
 
 };
 
+class OpenGlGuiWindow : public WindowInterface {
+    int windowWidth;
+    int windowHeight;
+    const char* title;
+private:
+    SDL_Window* window;
+    SDL_GLContext glContext;
+    OpenGLSimulationWindow* target;
+
+public:
+    OpenGlGuiWindow(const char* newTitle, int width, int height, OpenGLSimulationWindow* targetwindow) : windowWidth(width), windowHeight(height), title(newTitle), target(targetwindow) {
+        init();
+    }
+
+    ~OpenGlGuiWindow() {
+        // Cleanup ImGui
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplSDL2_Shutdown();
+        ImGui::DestroyContext();
+
+        // Cleanup SDL
+        SDL_GL_DeleteContext(glContext);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+    }
+
+
+    int getWidth() override {
+        return windowWidth;
+    }
+
+    int getHeight() override {
+        return windowHeight;
+    }
+
+    SDL_Window* getWindow() override {
+        return window;
+    }
+
+    SDL_GLContext getGLContext() override {
+        return glContext;
+    }
+
+    bool init() override {
+
+        // Initialize ImGui
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+
+        // Initialize SDL2 and create window
+        if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+            std::cerr << "SDL initialization failed: " << SDL_GetError() << std::endl;
+            return false;
+        }
+
+        window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+        if (window == nullptr) {
+            std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
+            SDL_Quit();
+            return false;
+        }
+
+        glContext = SDL_GL_CreateContext(window);
+        if (glContext == nullptr) {
+            std::cerr << "OpenGL context creation failed: " << SDL_GetError() << std::endl;
+            SDL_DestroyWindow(window);
+            SDL_Quit();
+            return false;
+        }
+
+        // Initialize ImGui SDL2 and OpenGL bindings
+        ImGui_ImplSDL2_InitForOpenGL(window, glContext);
+        ImGui_ImplOpenGL3_Init("#version 130");
+
+        return true;
+
+    }
+
+    void test(){
+    }
+    
+
+    void render() override {
+
+        // Start ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL2_NewFrame(window);
+        ImGui::NewFrame();
+
+        // Create GUI elements
+        ImGui::Begin("GUI Window");
+
+        ImGui::Text("Hello, ImGui!");
+        if (ImGui::Button("Pause/Unpause")) {
+            std::cout << "Button clicked!: Paused" << std::endl;
+            if (target->isPaused())
+                target->continueSimulation();
+            else target->pauseSimulation();
+        }
+
+        static float sliderSteeringangle = target->steeringangle;
+        ImGui::SliderFloat("Steering Angle", &sliderSteeringangle, -2.0f, 2.0f);
+
+        target->steeringangle = sliderSteeringangle;
+
+        static float sliderDiffusion = target->diffusion;
+        ImGui::SliderFloat("Diffusion", &sliderDiffusion, -0.0f, 1.0f);
+
+        target->diffusion = sliderDiffusion;
+
+        static float sliderRandomangle = target->randomangle;
+        ImGui::SliderFloat("Random Angle", &sliderRandomangle, -2.0f, 2.0f);
+
+        target->randomangle = sliderRandomangle;
+
+
+
+        static char textInput[128] = "";
+        ImGui::InputText("Input", textInput, sizeof(textInput));
+
+        ImGui::End();
+
+
+
+
+        // Render ImGui frame
+        ImGui::Render();
+        glViewport(0, 0, (int)ImGui::GetIO().DisplaySize.x, (int)ImGui::GetIO().DisplaySize.y);
+        glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        SDL_GL_SwapWindow(window);
+    }
+
+    void cleanup() override {
+        // Cleanup ImGui
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplSDL2_Shutdown();
+        ImGui::DestroyContext();
+
+        // Cleanup SDL
+        if (glContext != nullptr) {
+            SDL_GL_DeleteContext(glContext);
+        }
+        if (window != nullptr) {
+            SDL_DestroyWindow(window);
+        }
+        SDL_Quit();
+    }
+
+};
+
 void resizeViewport(int width, int height) {
     // Update the OpenGL viewport to match the window size
     glViewport(0, 0, width, height);
 }
 
+
 int sdltest_main(int argc, char* argv[]) {
-    OpenGLWindow window(windowWidth, windowHeight);
+    OpenGLSimulationWindow simulationWindow("Simualtion", simulationWindowWidth, simulationWindowHeight);
+    OpenGlGuiWindow guiwindow("Controlls",GUIWindowWidth, GUIWindowHeight,&simulationWindow);
+
+    int maxwindows = 2;
+    WindowInterface *windows[2];
+
+    for (WindowInterface* w : windows)
+        w = 0;
+
+    windows[0] = &simulationWindow;
+    windows[1] = &guiwindow;
+
+    
 
 
-    if (!window.init()) {
-        return 1;
-    }
-
-
+    simulationWindow.pauseSimulation();
+    simulationWindow.continueSimulation();
     bool quit = false;
     SDL_Event event;
-    while (!quit) {
+    while (!quit && !stopFlag) {
         while (SDL_PollEvent(&event)) {
+            ImGui_ImplSDL2_ProcessEvent(&event);
+
             if (event.type == SDL_QUIT) {
                 quit = true;
-            } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                // If the window size changed, update the viewport
-                int width = event.window.data1;
-                int height = event.window.data2;
-                resizeViewport(width, height);
+                std::cout << "SD_Quit\n";
+            }
+            else if (event.type == SDL_WINDOWEVENT) {
+                // Handle window events
+                if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
+                    std::cout << "SDL_windowevent_close \n";
+                    // close all
+                    for (int i = 0; i < maxwindows; i++) {
+
+                        if (windows[i] != 0) {
+                            // Close all windows
+                            quit = true;
+                            //windows[i]->cleanup();
+                            //windows[i] = 0;
+                            break;
+                        }
+                        
+                    }
+                }else if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                    // If the window size changed, update the viewport
+                    int width = event.window.data1;
+                    int height = event.window.data2;
+                    std::cout << "123xxxxxxxxxxxx3123";
+                    resizeViewport(width, height);
+                }
+            } 
+        }
+        if(!quit)
+        for(WindowInterface *window : windows)
+        {
+            if (window != 0)
+            {
+                // Set current OpenGL context
+                SDL_GL_MakeCurrent(window->getWindow(), window->getGLContext());
+
+                // Perform OpenGL initialization
+                glViewport(0, 0, window->getWidth(), window->getHeight());
+                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                window->render();
             }
         }
-
-        window.render();
     }
-
-    window.cleanup();
     return 0;
 }
