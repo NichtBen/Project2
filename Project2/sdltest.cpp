@@ -18,15 +18,16 @@
 std::atomic<bool> stopFlag(false);
 
 
+//to be done so you can increase decrease amount of agends
+    //to be done WATCHOUT same class  vars in simulationWindow class!
+int maxSimulationWindowWidth = 1900;
+int maxSimulationWindowHeight = 1000;
 
-int maxSimulationWindowWidth = 800;
-int maxSimulationWindowHeight = 600;
+int simulationWindowWidth = 1900;
+int simulationWindowHeight = 1000;
 
-int simulationWindowWidth = 800;
-int simulationWindowHeight = 600;
-
-int GUIWindowWidth = 800;
-int GUIWindowHeight = 600;
+int GUIWindowWidth = 600;
+int GUIWindowHeight = 200;
 
 class WindowInterface {
 public:
@@ -57,19 +58,21 @@ public:
 
     //Simulation variable
     //size of data textures --> amount of paralel agends
+    //to be done WATCHOUT same global vars!
     int maxSimulationWidth = 100;
     int maxSimulationHeight = 100;
-    int simulationWidth = 100;
-    int simulationHeight = 100;
+    int simulationWidth = 1000;
+    int simulationHeight = 1000;
     float targetFrameRate = 60;
     float diffusion = 0.2f;
+    float evaporation = 0.2f;
     float moveSpeed = 1.0f;
     float steeringangle = 0.2f;
     float randomangle = 0.05f;
     //render variable
 //size of world
-    int worldWidth = 800;
-    int worldHeight = 600;
+    int worldWidth = 2000;
+    int worldHeight = 1000;
 
     GLuint CStestProgram;
     GLuint CSanttestProgram;
@@ -269,6 +272,8 @@ public:
 
         GLuint randomangleUniformLocation = glGetUniformLocation(CSanttestProgram, "randomangle");
         glUniform1f(randomangleUniformLocation, randomangle);
+
+
     }
 
     void initCSanttestDebugTextureBindings() {
@@ -313,6 +318,8 @@ public:
 
         GLuint randomangleUniformLocation = glGetUniformLocation(CSanttestProgram, "randomangle");
         glUniform1f(randomangleUniformLocation, randomangle);
+
+
 
         //set up shader constants worldwidth and worldhigh
         GLint widthLocation = glGetUniformLocation(CSanttestProgram, "worldWidth");
@@ -446,8 +453,13 @@ public:
         glUseProgram(CSblurProgram);
         GLint timeUniformLocation = glGetUniformLocation(CSblurProgram, "deltaTime");
         glUniform1f(timeUniformLocation, (currentTime - previousTime) / (1000 / targetFrameRate));
+
         GLint diffusionUniformhLocation = glGetUniformLocation(CSblurProgram, "diffusion");
         glUniform1f(diffusionUniformhLocation, diffusion);
+
+        GLuint evaporationUniformLocation = glGetUniformLocation(CSblurProgram, "evaporation");
+        std::cout << "  :: " << evaporationUniformLocation;
+        glUniform1f(evaporationUniformLocation, evaporation);
     }
 
     void initCSblurTextures() {
@@ -455,8 +467,13 @@ public:
         glUseProgram(CSblurProgram);
         GLint timeUniformLocation = glGetUniformLocation(CSblurProgram, "deltaTime");
         glUniform1f(timeUniformLocation, (currentTime - previousTime) / (1000 / targetFrameRate));
+
         GLint diffusionUniformhLocation = glGetUniformLocation(CSblurProgram, "diffusion");
         glUniform1f(diffusionUniformhLocation, diffusion);
+
+        GLuint evaporationUniformLocation = glGetUniformLocation(CSblurProgram, "evaporation");
+        std::cout << "  :: " << evaporationUniformLocation;
+        glUniform1f(evaporationUniformLocation, evaporation);
 
         glGenTextures(1, &resultTexture);
         glBindTexture(GL_TEXTURE_2D, resultTexture);
@@ -772,9 +789,6 @@ public:
         return true;
 
     }
-
-    void test(){
-    }
     
 
     void render() override {
@@ -809,6 +823,21 @@ public:
         ImGui::SliderFloat("Random Angle", &sliderRandomangle, -2.0f, 2.0f);
 
         target->randomangle = sliderRandomangle;
+
+        static float sliderMoveSpeed = target->moveSpeed;
+        ImGui::SliderFloat("Move Speed ", &sliderMoveSpeed, -2.0f, 2.0f);
+
+        target->moveSpeed = sliderMoveSpeed;
+
+        static float sliderSimulationSpeed = target->targetFrameRate;
+        ImGui::SliderFloat("Frame rate/ simulationspeed ", &sliderSimulationSpeed, -2.0f, 2.0f);
+
+        target->targetFrameRate = sliderSimulationSpeed;
+
+        static float sliderEvaporation = target->evaporation;
+        ImGui::SliderFloat("Evaporation", &sliderEvaporation, -2.0f, 2.0f);
+
+        target->evaporation = sliderEvaporation;
 
 
 
@@ -866,11 +895,8 @@ int sdltest_main(int argc, char* argv[]) {
     windows[0] = &simulationWindow;
     windows[1] = &guiwindow;
 
-    
+  
 
-
-    simulationWindow.pauseSimulation();
-    simulationWindow.continueSimulation();
     bool quit = false;
     SDL_Event event;
     while (!quit && !stopFlag) {

@@ -21,6 +21,8 @@ uniform float deltaTime;
 uniform uint worldWidth;
 uniform uint worldHeight;
 
+
+uniform float evaporation;
 //how tight agends sample infron of them
 uniform float steeringangle;
 //how far the variation away from target is
@@ -57,7 +59,7 @@ uint hash(uint state) {
 
 float uintFloat(uint a)
 {
- return a / 2147483647.0;
+ return a / 4294967295.0;
 }
 
 uint getRandomNumber()
@@ -150,7 +152,7 @@ void updateAgend() {
    {
    }
 
-
+   newAngle += rand;
 
 
     // Write nextpos to output

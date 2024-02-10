@@ -23,7 +23,7 @@ void main() {
 
     vec4 currentColor = imageLoad(targetTexture, computationPos);
 
-    vec4 nextColor = currentColor +  ((mixedColor * (1.0 / 9.0))- currentColor)*0.3  -  vec4(diffusion,diffusion,diffusion,diffusion);
+    vec4 nextColor = currentColor +  ((mixedColor * (1.0 / 9.0))- currentColor)*diffusion  -  vec4(evaporation,evaporation,evaporation,evaporation);
 
     if(nextColor[0] <= 0)   
         nextColor = vec4(0,0,0,0);
