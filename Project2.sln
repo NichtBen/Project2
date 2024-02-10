@@ -7,20 +7,35 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Project2", "Project2\Projec
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release|ARM = Release|ARM
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
+		test|ARM = test|ARM
+		test|x64 = test|x64
+		test|x86 = test|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.Debug|ARM.ActiveCfg = Debug|ARM
+		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.Debug|ARM.Build.0 = Debug|ARM
 		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.Debug|x64.ActiveCfg = Debug|x64
 		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.Debug|x64.Build.0 = Debug|x64
 		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.Debug|x86.ActiveCfg = Debug|Win32
 		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.Debug|x86.Build.0 = Debug|Win32
+		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.Release|ARM.ActiveCfg = Release|ARM
+		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.Release|ARM.Build.0 = Release|ARM
 		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.Release|x64.ActiveCfg = Release|x64
 		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.Release|x64.Build.0 = Release|x64
 		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.Release|x86.ActiveCfg = Release|Win32
 		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.Release|x86.Build.0 = Release|Win32
+		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.test|ARM.ActiveCfg = test|x64
+		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.test|ARM.Build.0 = test|x64
+		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.test|x64.ActiveCfg = test|x64
+		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.test|x64.Build.0 = test|x64
+		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.test|x86.ActiveCfg = test|Win32
+		{E234E11F-CC04-41A8-BBA1-26EEAD781AD1}.test|x86.Build.0 = test|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

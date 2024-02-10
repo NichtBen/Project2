@@ -308,7 +308,6 @@ public:
 
 
         GLuint moveSpeedUniformLocation = glGetUniformLocation(CSanttestProgram, "moveSpeed");
-        std::cout << "  :: " << moveSpeedUniformLocation;
         glUniform1f(moveSpeedUniformLocation, moveSpeed);
 
 
@@ -458,7 +457,6 @@ public:
         glUniform1f(diffusionUniformhLocation, diffusion);
 
         GLuint evaporationUniformLocation = glGetUniformLocation(CSblurProgram, "evaporation");
-        std::cout << "  :: " << evaporationUniformLocation;
         glUniform1f(evaporationUniformLocation, evaporation);
     }
 
@@ -472,7 +470,6 @@ public:
         glUniform1f(diffusionUniformhLocation, diffusion);
 
         GLuint evaporationUniformLocation = glGetUniformLocation(CSblurProgram, "evaporation");
-        std::cout << "  :: " << evaporationUniformLocation;
         glUniform1f(evaporationUniformLocation, evaporation);
 
         glGenTextures(1, &resultTexture);
@@ -830,7 +827,7 @@ public:
         target->moveSpeed = sliderMoveSpeed;
 
         static float sliderSimulationSpeed = target->targetFrameRate;
-        ImGui::SliderFloat("Frame rate/ simulationspeed ", &sliderSimulationSpeed, -2.0f, 2.0f);
+        ImGui::SliderFloat("Frame rate/ simulationspeed ", &sliderSimulationSpeed,0.0f,200.0f);
 
         target->targetFrameRate = sliderSimulationSpeed;
 
@@ -927,7 +924,7 @@ int sdltest_main(int argc, char* argv[]) {
                     // If the window size changed, update the viewport
                     int width = event.window.data1;
                     int height = event.window.data2;
-                    std::cout << "123xxxxxxxxxxxx3123";
+                    std::cout << "SDL_WINDOWEVENT_SIZE_CHANGED";
                     resizeViewport(width, height);
                 }
             } 
