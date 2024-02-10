@@ -98,41 +98,16 @@ public:
     int currentTime;
     const float PI = 3.14159265358979323846;
 
-    bool paused = false;
 
-    int getWidth() override {
-        return windowWidth;
-    }
-
-    int getHeight() override {
-        return windowHeight;
-    }
-
-    bool isPaused() {
-        return paused;
-    }
-
-    SDL_Window* getWindow() override{
-        return window;
-    }
-
-    SDL_GLContext getGLContext() override {
-        return glContext;
-    }
-
-    OpenGLSimulationWindow(const char* newTitle, int width, int height) : windowWidth(width), windowHeight(height), title(newTitle)
-    {
-
-        init();
-    }
+    OpenGLWindow(int width, int height) : screenWidth(width), screenHeight(height) {}
 
 
     void pauseSimulation() {
-        paused = true;
+
     }
 
     void continueSimulation() {
-        paused = false;
+
     }
 
 
@@ -233,7 +208,14 @@ public:
         std::mt19937 gen(rd());
         std::uniform_int_distribution<int> dis(0., simulationWidth - 1);
         std::uniform_int_distribution<int> dis2(0, simulationHeight - 1);
-        
+        // Rebind startTexture before the loop
+        glBindTexture(GL_TEXTURE_2D, startTexture);
+
+        // Set an initial red pixel in the startTexture
+        float initialColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };  // Red color
+        for (int i = 0; i < simulationWidth * simulationHeight * initialLifeAmount; i++)
+            glTexSubImage2D(GL_TEXTURE_2D, 0, dis(gen), dis2(gen), 1, 1, GL_RGBA, GL_FLOAT, initialColor);
+
         glUseProgram(0);
     }
 
@@ -655,7 +637,7 @@ public:
         glClear(GL_COLOR_BUFFER_BIT);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        glOrtho(0, windowWidth, 0, windowHeight, -1, 1);
+        glOrtho(0, screenWidth, 0, screenHeight, -1, 1);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
@@ -901,8 +883,6 @@ int sdltest_main(int argc, char* argv[]) {
     SDL_Event event;
     while (!quit && !stopFlag) {
         while (SDL_PollEvent(&event)) {
-            ImGui_ImplSDL2_ProcessEvent(&event);
-
             if (event.type == SDL_QUIT) {
                 quit = true;
                 std::cout << "SD_Quit\n";
